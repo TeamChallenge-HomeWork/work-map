@@ -43,5 +43,12 @@ type Services struct {
 }
 
 func (cfg *Config) InitServices(logger *zap.Logger) *Services {
-	return &Services{}
+	srvr := server.New(&server.Config{
+		Port:   cfg.Port,
+		Logger: logger,
+	})
+
+	return &Services{
+		Server: srvr,
+	}
 }
