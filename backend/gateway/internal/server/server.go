@@ -48,7 +48,7 @@ func (s *Server) Run() {
 	s.logger.Info("server is ready to handle requests", zap.String("address", s.httpServer.Addr))
 }
 
-func (s *Server) ShotDown(ctx context.Context) {
+func (s *Server) ShutDown(ctx context.Context) {
 	s.logger.Debug("Shutting down gracefully, press Ctrl+C again to force")
 	if err := s.httpServer.Shutdown(ctx); err != nil {
 		s.logger.Fatal("Server forced to shutdown: %v", zap.Error(err))
