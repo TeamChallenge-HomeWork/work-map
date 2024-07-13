@@ -1,0 +1,224 @@
+openapi: 3.0.3
+info:
+  title: Work-map documentation
+  version: 0.0.1
+servers:
+  - url: https://server.brolga-vibes.ts.net/
+    description: Production server (uses live data)
+  - url: http://100.104.232.63:4000/
+tags:
+  - name: user
+    description: Operations about user
+paths:
+  /user/register:
+    post:
+      tags:
+        - user
+      summary: Register a new user
+      description: Registers a new user and returns access and refresh tokens. The refresh token is returned in cookies
+      requestBody:
+        description: User registration data
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: user@email.com
+                password:
+                  type: string
+                  example: 'Qwerty123'
+      responses:
+        '200':
+          description: Tokens returned upon successful registration
+          headers:
+            Set-Cookie:
+              description: The refresh token cookie
+              schema:
+                type: string
+                example: "refresh_token=your_refresh_token_here; HttpOnly; Path=/; Max-Age=604800; Secure; SameSite=Strict"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gSmFtZXMiLCJlbWFpbCI6InVzZXJAZW1haWwuY29tIiwiaWF0IjoxNTE2MjM5MDIyfQ.xXDR3Ajzh7I8NQyWcO1M_IRDVZYRfhAVxnlPVQB9AfQ"
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid request"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Internal server error"
+  /user/login:
+    post:
+      tags:
+        - user
+      summary: Login a user
+      description: Authenticates a user and returns access and refresh tokens.
+      requestBody:
+        description: User login data
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "user@example.com"
+                password:
+                  type: string
+                  example: "password123"
+      responses:
+        '200':
+          description: Tokens returned upon successful login
+          headers:
+            Set-Cookie:
+              description: The refresh token cookie
+              schema:
+                type: string
+                example: "refresh_token=<REFRESH_TOKEN>; HttpOnly; Path=/; Max-Age=604800; Secure; SameSite=Strict"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: "new_access_token_here"
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid request"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Internal server error"
+  /user/logout:
+    post:
+      tags:
+        - user
+      summary: Logout a user
+      description: ...
+      security:
+        - refreshTokenCookie: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User loged(?) out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isSuccess:
+                    type: boolean
+                    example: true
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid request"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Unauthorized"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Internal server error"
+  /refresh-token:
+    post:
+      tags:
+        - user
+      summary: Refresh Access Token
+      description: >
+        Refreshes the access token using the refresh token stored in cookies. 
+        The client must send the request with the `refresh_token` cookie.
+      security:
+        - refreshTokenCookie: []
+      responses:
+        '200':
+          description: A new access token
+          headers:
+            Set-Cookie:
+              description: The refresh token cookie
+              schema:
+                type: string
+                example: "refresh_token=<REFRESH_TOKEN>; HttpOnly; Path=/; Max-Age=604800; Secure; SameSite=Strict"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: "new_access_token_here"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Unauthorized"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshTokenCookie:
+      type: apiKey
+      in: cookie
+      name: refresh_token
+      description: The refresh token stored in cookies
