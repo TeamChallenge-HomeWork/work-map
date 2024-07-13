@@ -3,6 +3,7 @@ module workmap/gateway
 go 1.22.1
 
 require (
+	github.com/brianvoe/gofakeit/v6 v6.28.0
 	github.com/spf13/viper v1.19.0
 	go.uber.org/zap v1.21.0
 	google.golang.org/grpc v1.62.1
