@@ -38,5 +38,10 @@ func New(cfg *Config) *Router {
 }
 
 func (r *Router) RegisterRouters() {
+	h, m := r.handler, r.middleware
+	_ = h
 
+	r.mux.HandleFunc("OPTIONS /", m.EnableCORS(preflight))
 }
+
+func preflight(w http.ResponseWriter, r *http.Request) {}
