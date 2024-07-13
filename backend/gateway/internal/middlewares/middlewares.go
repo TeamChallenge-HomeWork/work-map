@@ -18,5 +18,6 @@ type Middleware struct {
 func New(cfg *Config) *Middleware {
 	return &Middleware{
 		logger: cfg.Logger,
+		auth:   cfg.Auth,
 	}
 }
