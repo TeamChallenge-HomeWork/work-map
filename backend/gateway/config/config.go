@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"workmap/gateway/internal/gapi"
 	"workmap/gateway/internal/server"
 )
 
@@ -12,6 +13,7 @@ type (
 		AuthService AuthService `mapstructure:",squash"`
 	}
 	AuthService struct {
+		Host string `mapstructure:"AUTH_SERVICE_HOST"`
 		Port string `mapstructure:"AUTH_SERVICE_PORT"`
 	}
 )
@@ -33,7 +35,7 @@ func New(logger *zap.Logger) *Config {
 		logger.Fatal("failed to unmarshal into config struct", zap.Error(err))
 	}
 
-	// TODO refactore this shit because output is: config struct   {"": {"Port":"100.104.232.63","Port":"8080"}}
+	// TODO refactor this shit because output is: config struct   {"": {"Port":"100.104.232.63","Port":"8080"}}
 	logger.Debug("config struct", zap.Any("", cfg))
 	return &cfg
 }
@@ -43,9 +45,18 @@ type Services struct {
 }
 
 func (cfg *Config) InitServices(logger *zap.Logger) *Services {
+	auth, err := gapi.NewAuthService(&gapi.AuthConfig{
+		Host: cfg.AuthService.Host,
+		Port: cfg.AuthService.Port,
+	})
+	if err != nil {
+		logger.Fatal("failed to connect to auth service", zap.Error(err))
+	}
+
 	srvr := server.New(&server.Config{
 		Port:   cfg.Port,
 		Logger: logger,
+		Auth:   auth,
 	})
 
 	return &Services{

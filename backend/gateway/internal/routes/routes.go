@@ -3,6 +3,7 @@ package routes
 import (
 	"go.uber.org/zap"
 	"net/http"
+	pb "workmap/gateway/internal/gapi/proto_gen"
 	"workmap/gateway/internal/handlers"
 	"workmap/gateway/internal/middlewares"
 )
@@ -10,6 +11,7 @@ import (
 type Config struct {
 	Mux    *http.ServeMux
 	Logger *zap.Logger
+	Auth   pb.AuthServiceClient
 }
 
 type Router struct {
@@ -19,8 +21,14 @@ type Router struct {
 }
 
 func New(cfg *Config) *Router {
-	handler := handlers.New(&handlers.Config{})
-	middleware := middlewares.New(&middlewares.Config{})
+	handler := handlers.New(&handlers.Config{
+		Logger: cfg.Logger,
+		Auth:   cfg.Auth,
+	})
+	middleware := middlewares.New(&middlewares.Config{
+		Logger: cfg.Logger,
+		Auth:   cfg.Auth,
+	})
 
 	return &Router{
 		mux:        cfg.Mux,

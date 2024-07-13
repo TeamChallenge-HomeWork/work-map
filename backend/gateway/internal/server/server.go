@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"net/http"
+	pb "workmap/gateway/internal/gapi/proto_gen"
 	"workmap/gateway/internal/routes"
 )
 
 type Config struct {
 	Port   string
 	Logger *zap.Logger
+	Auth   pb.AuthServiceClient
 }
 
 type Server struct {
@@ -24,6 +26,7 @@ func New(cfg *Config) *Server {
 	router := routes.New(&routes.Config{
 		Mux:    mux,
 		Logger: cfg.Logger,
+		Auth:   cfg.Auth,
 	})
 	router.RegisterRouters()
 
