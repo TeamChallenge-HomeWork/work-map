@@ -42,6 +42,8 @@ func (r *Router) RegisterRouters() {
 	_ = h
 
 	r.mux.HandleFunc("OPTIONS /", m.EnableCORS(preflight))
+
+	r.mux.HandleFunc("POST /user/register", m.EnableCORS(h.UserRegister))
 }
 
 func preflight(w http.ResponseWriter, r *http.Request) {}
