@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"workmap/gateway/internal/cache"
 	"workmap/gateway/internal/gapi"
 	"workmap/gateway/internal/server"
 )
@@ -11,10 +12,18 @@ type (
 	Config struct {
 		Port        string      `mapstructure:"PORT"`
 		AuthService AuthService `mapstructure:",squash"`
+		Redis       Redis       `mapstructure:",squash"`
 	}
+
 	AuthService struct {
 		Host string `mapstructure:"AUTH_SERVICE_HOST"`
 		Port string `mapstructure:"AUTH_SERVICE_PORT"`
+	}
+
+	Redis struct {
+		Host     string `mapstructure:"REDIS_HOST"`
+		Port     string `mapstructure:"REDIS_PORT"`
+		Password string `mapstructure:"REDIS_PASSWORD"`
 	}
 )
 
@@ -49,14 +58,24 @@ func (cfg *Config) InitServices(logger *zap.Logger) *Services {
 		Host: cfg.AuthService.Host,
 		Port: cfg.AuthService.Port,
 	})
-	if err != nil {
+	if err != nil { // TODO for what?
 		logger.Fatal("failed to connect to auth service", zap.Error(err))
+	}
+
+	r, err := cache.New(&cache.Config{
+		Host:     cfg.Redis.Host,
+		Port:     cfg.Redis.Port,
+		Password: cfg.Redis.Password,
+	})
+	if err != nil {
+		logger.Fatal("failed connection to redis client", zap.Error(err))
 	}
 
 	srvr := server.New(&server.Config{
 		Port:   cfg.Port,
 		Logger: logger,
 		Auth:   auth,
+		Redis:  r,
 	})
 
 	return &Services{

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"net/http"
+	"workmap/gateway/internal/cache"
 	pb "workmap/gateway/internal/gapi/proto_gen"
 	"workmap/gateway/internal/routes"
 )
@@ -13,6 +14,7 @@ type Config struct {
 	Port   string
 	Logger *zap.Logger
 	Auth   pb.AuthServiceClient
+	Redis  cache.Redis
 }
 
 type Server struct {
@@ -27,6 +29,7 @@ func New(cfg *Config) *Server {
 		Mux:    mux,
 		Logger: cfg.Logger,
 		Auth:   cfg.Auth,
+		Redis:  cfg.Redis,
 	})
 	router.RegisterRouters()
 
