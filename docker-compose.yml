@@ -37,7 +37,6 @@ services:
     networks:
       - gateway
 
-
 networks:
   work-map:
     driver: bridge
