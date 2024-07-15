@@ -24,6 +24,15 @@ services:
     ports:
       - "4001:4001"
 
+  gateway-redis:
+    container_name: gateway-redis
+    image: redis:alpine
+    ports:
+      - "6378-6379"
+    env_file:
+      - ./backend/gateway/.env
+    entrypoint: [ "sh", "-c", "redis-server --requirepass $${REDIS_PASSWORD}" ]
+
 networks:
   work-map:
     driver: bridge
