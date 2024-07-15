@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -14,6 +15,7 @@ import (
 	"strings"
 	"testing"
 	pb "workmap/gateway/internal/gapi/proto_gen"
+	"workmap/gateway/internal/store"
 )
 
 func (m *MockAuthServiceClient) Register(ctx context.Context, in *pb.RegisterRequest, opts ...grpc.CallOption) (*pb.RegisterReply, error) {
@@ -36,7 +38,14 @@ func (m *MockAuthServiceClient) RefreshToken(ctx context.Context, in *pb.Refresh
 }
 
 func TestUserRegister(t *testing.T) {
-	logger := zap.NewNop()
+	logger, _ := zap.NewDevelopment()
+
+	var (
+		email    = gofakeit.Email()
+		password = gofakeit.Password(true, true, true, true, false, 12)
+		at       = gofakeit.UUID()
+		rt       = gofakeit.UUID()
+	)
 
 	tests := []struct {
 		name           string
@@ -48,12 +57,12 @@ func TestUserRegister(t *testing.T) {
 		{
 			name: "valid request",
 			input: user{
-				Email:    "test@example.com",
-				Password: "password123",
+				Email:    email,
+				Password: password,
 			},
 			mockResponse: &pb.RegisterReply{
-				RefreshToken: "mockRefreshToken",
-				AccessToken:  "mockAccessToken",
+				RefreshToken: rt,
+				AccessToken:  at,
 			},
 			mockError:      nil,
 			expectedStatus: http.StatusOK,
@@ -68,7 +77,7 @@ func TestUserRegister(t *testing.T) {
 		{
 			name: "missing email",
 			input: user{
-				Password: "password123",
+				Password: password,
 			},
 			mockResponse:   nil,
 			mockError:      nil,
@@ -77,7 +86,7 @@ func TestUserRegister(t *testing.T) {
 		{
 			name: "missing password",
 			input: user{
-				Email: "test@example.com",
+				Email: email,
 			},
 			mockResponse:   nil,
 			mockError:      nil,
@@ -86,8 +95,8 @@ func TestUserRegister(t *testing.T) {
 		{
 			name: "auth service error",
 			input: user{
-				Email:    "test@example.com",
-				Password: "password123",
+				Email:    email,
+				Password: password,
 			},
 			mockResponse:   nil,
 			mockError:      status.New(codes.Unavailable, "auth service error").Err(),
@@ -98,7 +107,21 @@ func TestUserRegister(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAuthService := new(MockAuthServiceClient)
-			handler := &Handler{logger: logger, auth: mockAuthService}
+
+			testRedis, err := store.NewRedis(&store.RedisConfig{
+				Host:     "100.104.232.63",
+				Port:     "6366",
+				Password: "password",
+			})
+			if err != nil {
+				t.Fatal("failed to create test redis client")
+			}
+
+			handler := &Handler{
+				logger: logger,
+				auth:   mockAuthService,
+				redis:  testRedis,
+			}
 
 			mockAuthService.On("Register", mock.Anything, mock.Anything).Return(tt.mockResponse, tt.mockError)
 
