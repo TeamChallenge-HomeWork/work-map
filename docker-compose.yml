@@ -23,6 +23,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "4001:4001"
+    networks:
+      - gateway
 
   gateway-redis:
     container_name: gateway-redis
@@ -32,7 +34,12 @@ services:
     env_file:
       - ./backend/gateway/.env
     entrypoint: [ "sh", "-c", "redis-server --requirepass $${REDIS_PASSWORD}" ]
+    networks:
+      - gateway
+
 
 networks:
   work-map:
+    driver: bridge
+  gateway:
     driver: bridge
