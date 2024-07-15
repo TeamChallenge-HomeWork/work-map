@@ -3,6 +3,7 @@ module workmap/gateway
 go 1.22.1
 
 require (
+	github.com/brianvoe/gofakeit/v6 v6.28.0
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
