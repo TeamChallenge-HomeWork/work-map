@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/status"
 	"net/http"
+	"time"
 	pb "workmap/gateway/internal/gapi/proto_gen"
 )
 
@@ -33,8 +34,6 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.logger.Info("user", zap.String("email", u.Email), zap.String("password", u.Password))
-
 	res, err := h.auth.Register(context.TODO(), &pb.RegisterRequest{
 		Email:    u.Email,
 		Password: u.Password,
@@ -51,6 +50,16 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 			h.logger.Error("unexpected error", zap.Error(err))
 		}
 
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// TODO add JWT validator for access and refresh token
+
+	// TODO add TTL extractor from JWT
+	rRes := h.redis.Client.Set("access_token:"+res.AccessToken, u.Email, time.Duration(5)*time.Minute)
+	if rRes.Err() != nil {
+		h.logger.Error("failed to set access token", zap.String("token", res.AccessToken))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
