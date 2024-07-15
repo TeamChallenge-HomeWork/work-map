@@ -3,9 +3,12 @@ package config
 import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"workmap/gateway/internal/cache"
 	"workmap/gateway/internal/gapi"
+	"workmap/gateway/internal/handlers"
+	"workmap/gateway/internal/middlewares"
+	"workmap/gateway/internal/routes"
 	"workmap/gateway/internal/server"
+	"workmap/gateway/internal/store"
 )
 
 type (
@@ -53,32 +56,49 @@ type Services struct {
 	Server *server.Server
 }
 
-func (cfg *Config) InitServices(logger *zap.Logger) *Services {
+func (cfg *Config) NewServices(logger *zap.Logger) *Services {
 	auth, err := gapi.NewAuthService(&gapi.AuthConfig{
 		Host: cfg.AuthService.Host,
 		Port: cfg.AuthService.Port,
 	})
-	if err != nil { // TODO for what?
-		logger.Fatal("failed to connect to auth service", zap.Error(err))
+	if err != nil { // TODO delete this
+		logger.Fatal("auth service err", zap.Error(err))
 	}
 
-	r, err := cache.New(&cache.Config{
+	redis, err := store.NewRedis(&store.RedisConfig{
 		Host:     cfg.Redis.Host,
 		Port:     cfg.Redis.Port,
 		Password: cfg.Redis.Password,
 	})
 	if err != nil {
-		logger.Fatal("failed connection to redis client", zap.Error(err))
+		logger.Fatal("failed connection to redis", zap.Error(err))
 	}
 
-	srvr := server.New(&server.Config{
-		Port:   cfg.Port,
+	h := handlers.New(&handlers.Config{
 		Logger: logger,
 		Auth:   auth,
-		Redis:  r,
+		Redis:  redis,
+	})
+
+	m := middlewares.New(&middlewares.Config{
+		Logger: logger,
+		Auth:   auth,
+		Redis:  redis,
+	})
+
+	r := routes.New(&routes.Config{
+		Logger:     logger,
+		Handler:    h,
+		Middleware: m,
+	})
+
+	s := server.New(&server.Config{
+		Port:   cfg.Port,
+		Logger: logger,
+		Router: r,
 	})
 
 	return &Services{
-		Server: srvr,
+		Server: s,
 	}
 }

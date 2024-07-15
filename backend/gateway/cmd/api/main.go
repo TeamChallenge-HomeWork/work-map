@@ -13,7 +13,7 @@ import (
 func main() {
 	log := logger.New()
 	cfg := config.New(log)
-	services := cfg.InitServices(log)
+	services := cfg.NewServices(log)
 	server := services.Server
 
 	server.Run()

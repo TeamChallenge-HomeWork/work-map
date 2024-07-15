@@ -1,4 +1,4 @@
-package cache
+package store
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"github.com/go-redis/redis"
 )
 
-type Config struct {
+type RedisConfig struct {
 	Host     string
 	Port     string
 	Password string
@@ -16,7 +16,7 @@ type Redis struct {
 	Client redis.Client
 }
 
-func New(cfg *Config) (Redis, error) {
+func NewRedis(cfg *RedisConfig) (Redis, error) {
 	addr := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
 	var client = redis.NewClient(&redis.Options{
 		Addr:     addr,

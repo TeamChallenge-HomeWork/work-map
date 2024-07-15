@@ -5,16 +5,13 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"net/http"
-	"workmap/gateway/internal/cache"
-	pb "workmap/gateway/internal/gapi/proto_gen"
 	"workmap/gateway/internal/routes"
 )
 
 type Config struct {
 	Port   string
 	Logger *zap.Logger
-	Auth   pb.AuthServiceClient
-	Redis  cache.Redis
+	Router *routes.Router
 }
 
 type Server struct {
@@ -25,13 +22,7 @@ type Server struct {
 func New(cfg *Config) *Server {
 	mux := http.NewServeMux()
 
-	router := routes.New(&routes.Config{
-		Mux:    mux,
-		Logger: cfg.Logger,
-		Auth:   cfg.Auth,
-		Redis:  cfg.Redis,
-	})
-	router.RegisterRouters()
+	cfg.Router.RegisterRoutes(mux)
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
 	srvr := &http.Server{
