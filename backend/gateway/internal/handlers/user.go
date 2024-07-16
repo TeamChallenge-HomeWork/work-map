@@ -46,6 +46,8 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 				zap.String("code", e.Code().String()),
 				zap.String("description", e.Proto().Message),
 			)
+			http.Error(w, "Invalid request", http.StatusBadRequest)
+			return
 		} else {
 			h.logger.Error("unexpected error", zap.Error(err))
 		}
