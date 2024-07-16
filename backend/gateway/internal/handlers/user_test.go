@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
@@ -93,13 +94,23 @@ func TestUserRegister(t *testing.T) {
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			name: "auth service error",
+			name: "auth service error with code",
 			input: user{
 				Email:    email,
 				Password: password,
 			},
 			mockResponse:   nil,
 			mockError:      status.New(codes.Unavailable, "auth service error").Err(),
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "auth service unexpected error",
+			input: user{
+				Email:    email,
+				Password: password,
+			},
+			mockResponse:   nil,
+			mockError:      errors.New("unexpected error"),
 			expectedStatus: http.StatusInternalServerError,
 		},
 	}
