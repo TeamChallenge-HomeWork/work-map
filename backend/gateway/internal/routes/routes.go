@@ -27,7 +27,6 @@ func New(cfg *Config) *Router {
 
 func (r *Router) RegisterRoutes(mux *http.ServeMux) {
 	h, m := r.handler, r.middleware
-	_ = h
 
 	mux.HandleFunc("OPTIONS /", m.EnableCORS(preflight))
 
