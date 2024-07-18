@@ -63,12 +63,13 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 	ttl, err := getTTL(res.AccessToken)
 	if err != nil {
 		h.logger.Error("failed to get ttl", zap.Error(err))
-		// TODO what am i suppose to do?
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
 	rRes := h.redis.Client.Set("access_token:"+res.AccessToken, u.Email, ttl)
 	if rRes.Err() != nil {
-		h.logger.Error("failed to set access token", zap.String("token", res.AccessToken))
+		h.logger.Error("failed to set access token", zap.String("token", res.AccessToken), zap.Error(rRes.Err()))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
