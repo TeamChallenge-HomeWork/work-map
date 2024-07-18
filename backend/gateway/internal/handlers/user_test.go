@@ -44,8 +44,8 @@ func TestUserRegister(t *testing.T) {
 	var (
 		email    = gofakeit.Email()
 		password = gofakeit.Password(true, true, true, true, false, 12)
-		at       = gofakeit.UUID()
-		rt       = gofakeit.UUID()
+		at       = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXIzOUBlbWFpbC5jb20iLCJuYmYiOjE3MjEyNTI5NjksImV4cCI6MTcyMTI1Mjk3OSwiaWF0IjoxNzIxMjUyOTY5fQ.kgAoGtXbJgHGDWtE2QTeZACjhZ4EOoz10gq6HW_zbCSg3g7QSagOToYHgWaEecBJpg7yQ-DaCjY6BCyiEClA7Q"
+		rt       = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXIzOUBlbWFpbC5jb20iLCJuYmYiOjE3MjEyNTI5NjksImV4cCI6MTcyMTI1Mjk3OSwiaWF0IjoxNzIxMjUyOTY5fQ.kgAoGtXbJgHGDWtE2QTeZACjhZ4EOoz10gq6HW_zbCSg3g7QSagOToYHgWaEecBJpg7yQ-DaCjY6BCyiEClA7Q"
 	)
 
 	tests := []struct {
@@ -113,15 +113,46 @@ func TestUserRegister(t *testing.T) {
 			mockError:      errors.New("unexpected error"),
 			expectedStatus: http.StatusInternalServerError,
 		},
+		{
+			name: "no connection to redis",
+			input: user{
+				Email:    email,
+				Password: password,
+			},
+			mockResponse: &pb.RegisterReply{
+				RefreshToken: rt,
+				AccessToken:  at,
+			},
+			mockError:      nil,
+			expectedStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "wrong access token",
+			input: user{
+				Email:    email,
+				Password: password,
+			},
+			mockResponse: &pb.RegisterReply{
+				RefreshToken: rt,
+				AccessToken:  "wrongToken",
+			},
+			mockError:      nil,
+			expectedStatus: http.StatusInternalServerError,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAuthService := new(MockAuthServiceClient)
 
+			rPort := "6366"
+			if tt.name == "no connection to redis" {
+				rPort = "1"
+			}
+
 			testRedis, err := store.NewRedis(&store.RedisConfig{
 				Host:     "100.104.232.63",
-				Port:     "6366",
+				Port:     rPort,
 				Password: "password",
 			})
 			if err != nil {
