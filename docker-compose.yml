@@ -1,6 +1,42 @@
 version: '3.4'
 
 services:
+  postgres:
+    container_name: postgres_db_test_goland
+    image: 'postgres'
+    ports:
+      - "12345:5432"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: users
+    volumes:
+      - ./db-data/postgres/:/var/lib/postgresql/data/
+
+  gateway:
+    container_name: gateway
+    build:
+      context: ./backend/gateway/
+      dockerfile: Dockerfile
+    ports:
+      - "4001:4001"
+    networks:
+      - gateway
+
+  gateway-redis:
+    container_name: gateway-redis
+    image: redis:alpine
+    ports:
+      - "6378-6379"
+    env_file:
+      - ./backend/gateway/.env
+    entrypoint: [ "sh", "-c", "redis-server --requirepass $${REDIS_PASSWORD}" ]
+    networks:
+      - gateway
+      
   auth-postgres:
     image: postgres
     container_name: auth-postgres
@@ -68,6 +104,10 @@ networks:
     driver: bridge
   auth:
     driver: bridge
-
+  work-map:
+    driver: bridge
+  gateway:
+    driver: bridge
+    
 volumes:
   db_data:
