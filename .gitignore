@@ -85,6 +85,8 @@ launchSettings.json
 *.env.development
 *.env.production
 
+db-data/
+
 # Ignore docker-compose override files
 docker-compose.override.yml
 
