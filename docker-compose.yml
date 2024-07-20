@@ -1,4 +1,67 @@
+version: '3.4'
+
 services:
+  auth-postgres:
+    image: postgres
+    container_name: auth-postgres
+    environment:
+      POSTGRES_DB: ${AUTH_POSTGRES_DB}
+      POSTGRES_USER: ${AUTH_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
+    ports:
+      - "${AUTH_POSTGRES_PORT}:5432"
+    networks:
+      - auth
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+
+  auth-redis:
+    image: redis
+    container_name: auth-redis
+    ports:
+      - "${AUTH_REDIS_PORT}:6379"
+    networks:
+      - auth
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5 
+    restart: unless-stopped
+  
+  auth:
+    image: ${DOCKER_REGISTRY-}auth
+    container_name: auth
+    build:
+      context: .
+      dockerfile: ./backend/auth/Auth.GRPC/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__Postgres=Server=${AUTH_POSTGRES_HOST};Port=${AUTH_POSTGRES_PORT};Database=${AUTH_POSTGRES_DB};User Id=${AUTH_POSTGRES_USER};Password=${AUTH_POSTGRES_PASSWORD};Include Error Detail=true
+      - ConnectionStrings__Redis=${AUTH_REDIS_HOST}:${AUTH_REDIS_PORT}
+    depends_on:
+      auth-postgres:
+        condition: service_healthy
+      auth-redis:
+        condition: service_healthy
+    ports:
+      - "${AUTH_SERVICE_PORT}:8080"
+    networks:
+      - gateway    
+      - auth
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+    restart: unless-stopped
+
   postgres:
     container_name: postgres_db_test_goland
     image: 'postgres'
@@ -35,9 +98,15 @@ services:
     networks:
       - gateway
 
-
 networks:
+  gateway:
+    driver: bridge
+  auth:
+    driver: bridge
   work-map:
     driver: bridge
   gateway:
     driver: bridge
+
+volumes:
+  db_data:
