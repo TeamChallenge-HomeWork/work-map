@@ -78,7 +78,7 @@ artifacts/
 **/bin/
 
 # Configuration files
-appsettings.json
+#appsettings.json
 launchSettings.json
 
 # Ignore .env files containing sensitive information

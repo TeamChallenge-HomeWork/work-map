@@ -14,7 +14,7 @@ services:
       - db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER}"]
-      interval: 30s
+      interval: 3s
       timeout: 10s
       retries: 5
     restart: unless-stopped
@@ -28,7 +28,7 @@ services:
       - auth
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
+      interval: 3s
       timeout: 10s
       retries: 5
     restart: unless-stopped
@@ -44,6 +44,8 @@ services:
       - ASPNETCORE_HTTP_PORTS=8080
       - ConnectionStrings__Postgres=Server=${AUTH_POSTGRES_HOST};Port=${AUTH_POSTGRES_PORT};Database=${AUTH_POSTGRES_DB};User Id=${AUTH_POSTGRES_USER};Password=${AUTH_POSTGRES_PASSWORD};Include Error Detail=true
       - ConnectionStrings__Redis=${AUTH_REDIS_HOST}:${AUTH_REDIS_PORT}
+      - AccessTokenKey=${JWT_ACCESS_SECRET_KEY}
+      - RefreshTokenKey=${JWT_REFRESH_SECRET_KEY}
     depends_on:
       auth-postgres:
         condition: service_healthy
@@ -52,27 +54,12 @@ services:
     ports:
       - "${AUTH_SERVICE_PORT}:8080"
     networks:
-      - gateway
       - auth
+      - work-map
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
     restart: unless-stopped
-
-  postgres:
-    container_name: postgres_db_test_goland
-    image: 'postgres'
-    ports:
-      - "12345:5432"
-    deploy:
-      mode: replicated
-      replicas: 1
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: users
-    volumes:
-      - ./db-data/postgres/:/var/lib/postgresql/data/
 
   gateway:
     container_name: gateway
@@ -83,6 +70,7 @@ services:
       - "4001:4001"
     networks:
       - gateway
+      - work-map
 
   gateway-redis:
     container_name: gateway-redis
