@@ -74,6 +74,8 @@ services:
   gateway-redis:
     container_name: gateway-redis
     image: redis:alpine
+    ports:
+      - "6377:6379"
     env_file:
       - ./backend/gateway/.env
     entrypoint: [ "sh", "-c", "redis-server --requirepass $${REDIS_PASSWORD}" ]
