@@ -54,7 +54,6 @@ __sapper__/
 
 # C# / .NET
 *.dll
-*.exe
 *.pdb
 *.nuget
 *.nupkg
@@ -65,15 +64,39 @@ artifacts/
 
 # Visual Studio
 .vs/
-
-# Rider / IntelliJ
 .idea/
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
+*.sln
 *.iml
 *.iws
+
+# gRPC
+**/obj/
+**/bin/
+
+# Configuration files
+#appsettings.json
+launchSettings.json
+
+# Ignore .env files containing sensitive information
+*.env.development
+*.env.production
+
+# Ignore docker-compose override files
+docker-compose.override.yml
+
+# Ignore Docker related files and directories
+/.docker
+/docker.sock
+
+# Ignore local Docker Compose configuration
+docker-compose.override.yml
+
+# Ignore Dockerfile specific files
+.dockerignore
 
 # Visual Studio Code
 .vscode/

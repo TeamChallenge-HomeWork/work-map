@@ -13,7 +13,6 @@ type AuthConfig struct {
 }
 
 func NewAuthService(cfg *AuthConfig) (pb.AuthServiceClient, error) {
-	// TODO do something if failed connection, because there is panic
 	addr := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {

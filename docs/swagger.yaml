@@ -50,23 +50,17 @@ paths:
         '400':
           description: Invalid request
           content:
-            application/json:
+            text/plain:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Invalid request"
+                type: string
+                example: "Invalid request"
         '500':
           description: Internal server error
           content:
-            application/json:
+            text/plain:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Internal server error"
+                type: string
+                example: "Internal server error"
   /user/login:
     post:
       tags:
@@ -107,23 +101,17 @@ paths:
         '400':
           description: Invalid request
           content:
-            application/json:
+            text/plain:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Invalid request"
+                type: string
+                example: "Invalid request"
         '500':
           description: Internal server error
           content:
-            application/json:
+            text/plain:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Internal server error"
+                type: string
+                example: "Internal server error"
   /user/logout:
     post:
       tags:
@@ -147,33 +135,25 @@ paths:
         '400':
           description: Invalid request
           content:
-            application/json:
+            text/plain:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Invalid request"
+                type: string
+                example: "Invalid request"
         '401':
           description: Unauthorized
           content:
-            application/json:
+            text/plain:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Unauthorized"
+                type: string
+                example: "Invalid request"
         '500':
           description: Internal server error
           content:
-            application/json:
+            text/plain:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Internal server error"
+                type: string
+                example: "Internal server error"
+
   /refresh-token:
     post:
       tags:
@@ -204,13 +184,10 @@ paths:
         '401':
           description: Unauthorized
           content:
-            application/json:
+            text/plain:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Unauthorized"
+                type: string
+                example: "Invalid request"
 components:
   securitySchemes:
     bearerAuth:
