@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
@@ -188,13 +189,12 @@ func TestUserRegister(t *testing.T) {
 			}
 
 			if tt.expectedStatus == http.StatusOK {
-				var resp accessTokenResponse
-				if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
-					t.Errorf("failed to decode response: %v", err)
+				resp := rr.Header().Get("Authorization")
+				exp := fmt.Sprintf("Bearer %s", tt.mockResponse.AccessToken)
+				if resp != exp {
+					t.Errorf("unexpected access token: got %v want %v", resp, exp)
 				}
-				if resp.AccessToken != tt.mockResponse.AccessToken {
-					t.Errorf("unexpected access token: got %v want %v", resp.AccessToken, tt.mockResponse.AccessToken)
-				}
+
 				cookie := rr.Result().Cookies()
 				if len(cookie) == 0 || cookie[0].Value != tt.mockResponse.RefreshToken {
 					t.Errorf("unexpected cookie: got %v want %v", cookie[0].Value, tt.mockResponse.RefreshToken)
@@ -365,13 +365,12 @@ func TestUserLogin(t *testing.T) {
 			}
 
 			if tt.expectedStatus == http.StatusOK {
-				var resp accessTokenResponse
-				if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
-					t.Errorf("failed to decode response: %v", err)
+				resp := rr.Header().Get("Authorization")
+				exp := fmt.Sprintf("Bearer %s", tt.mockResponse.AccessToken)
+				if resp != exp {
+					t.Errorf("unexpected access token: got %v want %v", resp, exp)
 				}
-				if resp.AccessToken != tt.mockResponse.AccessToken {
-					t.Errorf("unexpected access token: got %v want %v", resp.AccessToken, tt.mockResponse.AccessToken)
-				}
+
 				cookie := rr.Result().Cookies()
 				if len(cookie) == 0 || cookie[0].Value != tt.mockResponse.RefreshToken {
 					t.Errorf("unexpected cookie: got %v want %v", cookie[0].Value, tt.mockResponse.RefreshToken)

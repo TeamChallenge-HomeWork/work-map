@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/status"
 	"net/http"
@@ -126,13 +127,7 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	err = json.NewEncoder(w).Encode(accessTokenResponse{
-		AccessToken: res.AccessToken,
-	})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", res.AccessToken))
 }
 
 func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
@@ -200,11 +195,5 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	err = json.NewEncoder(w).Encode(accessTokenResponse{
-		AccessToken: res.AccessToken,
-	})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", res.AccessToken))
 }
