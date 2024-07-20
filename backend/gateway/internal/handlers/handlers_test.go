@@ -12,7 +12,7 @@ type MockAuthServiceClient struct {
 }
 
 func TestNew(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
+	logger := zap.NewNop()
 	mockAuthService := new(MockAuthServiceClient)
 
 	cfg := &Config{
