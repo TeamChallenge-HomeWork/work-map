@@ -205,9 +205,11 @@ func TestUserRegister(t *testing.T) {
 					t.Errorf("unexpected access token: got %v want %v", resp, exp)
 				}
 
-				cookie := rr.Result().Cookies()
-				if len(cookie) == 0 || cookie[0].Value != tt.mockResponse.RefreshToken {
-					t.Errorf("unexpected cookie: got %v want %v", cookie[0].Value, tt.mockResponse.RefreshToken)
+				cookies := rr.Result().Cookies()
+				if len(cookies) == 0 {
+					t.Errorf("expected a cookie but got none")
+				} else if cookies[0].Value != tt.mockResponse.RefreshToken {
+					t.Errorf("unexpected cookie: got %v want %v", cookies[0].Value, tt.mockResponse.RefreshToken)
 				}
 			} else if tt.expectedStatus == http.StatusConflict {
 				expected := "User already exist"
@@ -387,9 +389,11 @@ func TestUserLogin(t *testing.T) {
 					t.Errorf("unexpected access token: got %v want %v", resp, exp)
 				}
 
-				cookie := rr.Result().Cookies()
-				if len(cookie) == 0 || cookie[0].Value != tt.mockResponse.RefreshToken {
-					t.Errorf("unexpected cookie: got %v want %v", cookie[0].Value, tt.mockResponse.RefreshToken)
+				cookies := rr.Result().Cookies()
+				if len(cookies) == 0 {
+					t.Errorf("expected a cookie but got none")
+				} else if cookies[0].Value != tt.mockResponse.RefreshToken {
+					t.Errorf("unexpected cookie: got %v want %v", cookies[0].Value, tt.mockResponse.RefreshToken)
 				}
 			} else if tt.expectedStatus == http.StatusBadRequest {
 				expected := "Invalid request"
