@@ -68,7 +68,17 @@ func TestUserRegister(t *testing.T) {
 				AccessToken:  at,
 			},
 			mockError:      nil,
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusCreated,
+		},
+		{
+			name: "user already exist",
+			input: user{
+				Email:    email,
+				Password: password,
+			},
+			mockResponse:   nil,
+			mockError:      status.New(codes.AlreadyExists, "auth service error").Err(),
+			expectedStatus: http.StatusConflict,
 		},
 		{
 			name:           "empty request body",
@@ -188,7 +198,7 @@ func TestUserRegister(t *testing.T) {
 					status1, tt.expectedStatus)
 			}
 
-			if tt.expectedStatus == http.StatusOK {
+			if tt.expectedStatus == http.StatusCreated {
 				resp := rr.Header().Get("Authorization")
 				exp := fmt.Sprintf("Bearer %s", tt.mockResponse.AccessToken)
 				if resp != exp {
@@ -198,6 +208,12 @@ func TestUserRegister(t *testing.T) {
 				cookie := rr.Result().Cookies()
 				if len(cookie) == 0 || cookie[0].Value != tt.mockResponse.RefreshToken {
 					t.Errorf("unexpected cookie: got %v want %v", cookie[0].Value, tt.mockResponse.RefreshToken)
+				}
+			} else if tt.expectedStatus == http.StatusConflict {
+				expected := "User already exist"
+				if strings.TrimSpace(rr.Body.String()) != expected {
+					t.Errorf("handler returned unexpected body: got %v want %v",
+						strings.TrimSpace(rr.Body.String()), expected)
 				}
 			} else if tt.expectedStatus == http.StatusBadRequest {
 				expected := "Invalid request"

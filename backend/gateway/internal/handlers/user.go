@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"net/http"
 	"strconv"
@@ -85,6 +86,12 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 				zap.String("code", e.Code().String()),
 				zap.String("description", e.Proto().Message),
 			)
+
+			if e.Code() == codes.AlreadyExists {
+				http.Error(w, "User already exist", http.StatusConflict)
+				return
+			}
+
 			http.Error(w, "Invalid request", http.StatusBadRequest)
 			return
 		} else {
@@ -123,7 +130,7 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", res.AccessToken))
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 }
 
 func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
