@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/alicebob/miniredis/v2"
 	"github.com/brianvoe/gofakeit/v6"
+	"github.com/go-redis/redis"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -157,24 +159,21 @@ func TestUserRegister(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAuthService := new(MockAuthServiceClient)
 
-			rPort := "6366"
-			if tt.name == "no connection to redis" {
-				rPort = "1"
-			}
-
-			testRedis, err := store.NewRedis(&store.RedisConfig{
-				Host:     "100.104.232.63",
-				Port:     rPort,
-				Password: "password",
+			server, _ := miniredis.Run()
+			rc := redis.NewClient(&redis.Options{
+				Addr: server.Addr(),
 			})
-			if err != nil {
-				t.Fatal("failed to create test redis client")
-			}
+
+			r := &store.Redis{Client: *rc}
 
 			handler := &Handler{
 				logger: logger,
 				auth:   mockAuthService,
-				redis:  testRedis,
+				redis:  *r,
+			}
+
+			if tt.name == "no connection to redis" {
+				server.Close()
 			}
 
 			mockAuthService.On("Register", mock.Anything, mock.Anything).Return(tt.mockResponse, tt.mockError)
@@ -205,9 +204,11 @@ func TestUserRegister(t *testing.T) {
 					t.Errorf("unexpected access token: got %v want %v", resp, exp)
 				}
 
-				cookie := rr.Result().Cookies()
-				if len(cookie) == 0 || cookie[0].Value != tt.mockResponse.RefreshToken {
-					t.Errorf("unexpected cookie: got %v want %v", cookie[0].Value, tt.mockResponse.RefreshToken)
+				cookies := rr.Result().Cookies()
+				if len(cookies) == 0 {
+					t.Errorf("expected a cookie but got none")
+				} else if cookies[0].Value != tt.mockResponse.RefreshToken {
+					t.Errorf("unexpected cookie: got %v want %v", cookies[0].Value, tt.mockResponse.RefreshToken)
 				}
 			} else if tt.expectedStatus == http.StatusConflict {
 				expected := "User already exist"
@@ -339,24 +340,21 @@ func TestUserLogin(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAuthService := new(MockAuthServiceClient)
 
-			rPort := "6366"
-			if tt.name == "no connection to redis" {
-				rPort = "1"
-			}
-
-			testRedis, err := store.NewRedis(&store.RedisConfig{
-				Host:     "100.104.232.63",
-				Port:     rPort,
-				Password: "password",
+			server, _ := miniredis.Run()
+			rc := redis.NewClient(&redis.Options{
+				Addr: server.Addr(),
 			})
-			if err != nil {
-				t.Fatal("failed to create test redis client")
-			}
+
+			r := &store.Redis{Client: *rc}
 
 			handler := &Handler{
 				logger: logger,
 				auth:   mockAuthService,
-				redis:  testRedis,
+				redis:  *r,
+			}
+
+			if tt.name == "no connection to redis" {
+				server.Close()
 			}
 
 			mockAuthService.On("Login", mock.Anything, mock.Anything).Return(tt.mockResponse, tt.mockError)
@@ -387,9 +385,11 @@ func TestUserLogin(t *testing.T) {
 					t.Errorf("unexpected access token: got %v want %v", resp, exp)
 				}
 
-				cookie := rr.Result().Cookies()
-				if len(cookie) == 0 || cookie[0].Value != tt.mockResponse.RefreshToken {
-					t.Errorf("unexpected cookie: got %v want %v", cookie[0].Value, tt.mockResponse.RefreshToken)
+				cookies := rr.Result().Cookies()
+				if len(cookies) == 0 {
+					t.Errorf("expected a cookie but got none")
+				} else if cookies[0].Value != tt.mockResponse.RefreshToken {
+					t.Errorf("unexpected cookie: got %v want %v", cookies[0].Value, tt.mockResponse.RefreshToken)
 				}
 			} else if tt.expectedStatus == http.StatusBadRequest {
 				expected := "Invalid request"
