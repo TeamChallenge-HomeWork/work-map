@@ -54,11 +54,11 @@ func TestNewAuthService(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, client)
 
-		// Perform a simple call to ensure the connection works
 		resp, err := client.Register(context.Background(), &pb.RegisterRequest{
 			Email:    "test@example.com",
 			Password: "password123",
 		})
+
 		assert.NoError(t, err)
 		assert.Equal(t, "mockToken", resp.RefreshToken)
 		assert.Equal(t, "mockAccess", resp.AccessToken)

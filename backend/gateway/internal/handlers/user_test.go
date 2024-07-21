@@ -41,7 +41,7 @@ func (m *MockAuthServiceClient) RefreshToken(ctx context.Context, in *pb.Refresh
 }
 
 func TestUserRegister(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
+	logger := zap.NewNop()
 
 	var (
 		email    = gofakeit.Email()
@@ -233,7 +233,7 @@ func TestUserRegister(t *testing.T) {
 }
 
 func TestUserLogin(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
+	logger := zap.NewNop()
 
 	var (
 		email    = gofakeit.Email()

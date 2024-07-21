@@ -20,10 +20,6 @@ type MockRedisClient struct {
 	mock.Mock
 }
 
-type RedisClient interface {
-	Get(key string) (string, error)
-}
-
 type mockHandler struct {
 	called bool
 }
@@ -33,12 +29,8 @@ func (h *mockHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-type data struct {
-	AccessToken string `json:"accessToken"`
-}
-
 func TestCheckAuth(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
+	logger := zap.NewNop()
 
 	tests := []struct {
 		name          string
