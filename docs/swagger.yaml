@@ -31,22 +31,19 @@ paths:
                   type: string
                   example: 'Qwerty123'
       responses:
-        '200':
-          description: Tokens returned upon successful registration
+        '201':
+          description: Created
           headers:
+            Authorization:
+              description: The access token header
+              schema:
+                type: string
+                example: "Bearer <ACCESS_TOKEN>"
             Set-Cookie:
               description: The refresh token cookie
               schema:
                 type: string
-                example: "refresh_token=your_refresh_token_here; HttpOnly; Path=/; Max-Age=604800; Secure; SameSite=Strict"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  access_token:
-                    type: string
-                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gSmFtZXMiLCJlbWFpbCI6InVzZXJAZW1haWwuY29tIiwiaWF0IjoxNTE2MjM5MDIyfQ.xXDR3Ajzh7I8NQyWcO1M_IRDVZYRfhAVxnlPVQB9AfQ"
+                example: "refresh_token=<REFRESH_TOKEN>; HttpOnly; Path=/; Max-Age=604800; Secure; SameSite=Strict"
         '400':
           description: Invalid request
           content:
@@ -54,6 +51,13 @@ paths:
               schema:
                 type: string
                 example: "Invalid request"
+        '409':
+          description: Conflict
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "User already exist"
         '500':
           description: Internal server error
           content:
@@ -83,21 +87,18 @@ paths:
                   example: "password123"
       responses:
         '200':
-          description: Tokens returned upon successful login
+          description: OK
           headers:
+            Authorization:
+              description: The access token header
+              schema:
+                type: string
+                example: "Bearer <ACCESS_TOKEN>"
             Set-Cookie:
               description: The refresh token cookie
               schema:
                 type: string
                 example: "refresh_token=<REFRESH_TOKEN>; HttpOnly; Path=/; Max-Age=604800; Secure; SameSite=Strict"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  access_token:
-                    type: string
-                    example: "new_access_token_here"
         '400':
           description: Invalid request
           content:
@@ -105,6 +106,13 @@ paths:
               schema:
                 type: string
                 example: "Invalid request"
+        '401':
+          description: Unauthorized
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Unauthorized"
         '500':
           description: Internal server error
           content:
