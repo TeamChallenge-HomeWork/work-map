@@ -1,28 +1,21 @@
 package middlewares
 
 import (
-	"encoding/json"
 	"go.uber.org/zap"
 	"net/http"
+	"strings"
 )
-
-type data struct {
-	AccessToken string `json:"accessToken"`
-}
 
 func (m *Middleware) CheckAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var d data
-		if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
-			m.logger.Error("failed to read body with access token", zap.Error(err))
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
-			return
-		}
+		tokenString := r.Header.Get("Authorization")
+		m.logger.Debug(tokenString)
+		token := strings.TrimPrefix(tokenString, "Bearer ")
 
-		res, err := m.redis.Client.Get("access_token:" + d.AccessToken).Result()
+		res, err := m.redis.Client.Get("access_token:" + token).Result()
 		if err != nil {
-			m.logger.Error("failed to WHAT?", zap.Error(err))
-			http.Error(w, "unauthorized1", http.StatusUnauthorized)
+			m.logger.Error("token not found", zap.Error(err))
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 
