@@ -51,7 +51,7 @@ func getTTL(token string) (ttl time.Duration, err error) {
 	}
 	tExp := time.Unix(i, 0)
 
-	return tExp.Sub(time.Now()), nil
+	return time.Until(tExp), nil
 }
 
 type user struct {
