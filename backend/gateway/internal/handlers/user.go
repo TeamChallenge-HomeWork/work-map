@@ -53,10 +53,6 @@ func getTTL(token string) (ttl time.Duration, err error) {
 	return tExp.Sub(time.Now()), nil
 }
 
-type accessTokenResponse struct {
-	AccessToken string `json:"access_token,omitempty"`
-}
-
 type user struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -126,8 +122,8 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookie)
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", res.AccessToken))
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
@@ -194,6 +190,6 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookie)
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", res.AccessToken))
+	w.WriteHeader(http.StatusOK)
 }
