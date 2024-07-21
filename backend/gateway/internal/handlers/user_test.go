@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/alicebob/miniredis/v2"
 	"github.com/brianvoe/gofakeit/v6"
+	"github.com/go-redis/redis"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -157,24 +159,21 @@ func TestUserRegister(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAuthService := new(MockAuthServiceClient)
 
-			rPort := "6366"
-			if tt.name == "no connection to redis" {
-				rPort = "1"
-			}
-
-			testRedis, err := store.NewRedis(&store.RedisConfig{
-				Host:     "100.104.232.63",
-				Port:     rPort,
-				Password: "password",
+			server, _ := miniredis.Run()
+			rc := redis.NewClient(&redis.Options{
+				Addr: server.Addr(),
 			})
-			if err != nil {
-				t.Fatal("failed to create test redis client")
-			}
+
+			r := &store.Redis{Client: *rc}
 
 			handler := &Handler{
 				logger: logger,
 				auth:   mockAuthService,
-				redis:  testRedis,
+				redis:  *r,
+			}
+
+			if tt.name == "no connection to redis" {
+				server.Close()
 			}
 
 			mockAuthService.On("Register", mock.Anything, mock.Anything).Return(tt.mockResponse, tt.mockError)
@@ -341,24 +340,21 @@ func TestUserLogin(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAuthService := new(MockAuthServiceClient)
 
-			rPort := "6366"
-			if tt.name == "no connection to redis" {
-				rPort = "1"
-			}
-
-			testRedis, err := store.NewRedis(&store.RedisConfig{
-				Host:     "100.104.232.63",
-				Port:     rPort,
-				Password: "password",
+			server, _ := miniredis.Run()
+			rc := redis.NewClient(&redis.Options{
+				Addr: server.Addr(),
 			})
-			if err != nil {
-				t.Fatal("failed to create test redis client")
-			}
+
+			r := &store.Redis{Client: *rc}
 
 			handler := &Handler{
 				logger: logger,
 				auth:   mockAuthService,
-				redis:  testRedis,
+				redis:  *r,
+			}
+
+			if tt.name == "no connection to redis" {
+				server.Close()
 			}
 
 			mockAuthService.On("Login", mock.Anything, mock.Anything).Return(tt.mockResponse, tt.mockError)
