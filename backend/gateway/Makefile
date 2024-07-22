@@ -13,4 +13,7 @@ test-cover:
 	go test ./... -v -coverprofile=./test/coverage/coverage.out ./test/coverage
 	go tool cover -html=./test/coverage/coverage.out -o ./test/coverage/coverage.html
 
-.PHONY: grpc test test-cover
+lint:
+	golangci-lint run -v ./...
+
+.PHONY: grpc test test-cover lint
