@@ -14,20 +14,20 @@ builder.Services.AddGrpc();
 
 builder.Services.AddDbContext<DataContext>(options =>
 {
-    string host = builder.Configuration["AUTH_POSTGRES_HOST"]!;
-    string port = builder.Configuration["AUTH_POSTGRES_PORT"]!;
-    string dbname = builder.Configuration["AUTH_POSTGRES_DB"]!;
-    string user = builder.Configuration["AUTH_POSTGRES_USER"]!;
-    string password = builder.Configuration["AUTH_POSTGRES_PASSWORD"]!;
+    string host = builder.Configuration["POSTGRES_HOST"]!;
+    string port = builder.Configuration["POSTGRES_PORT"]!;
+    string dbname = builder.Configuration["POSTGRES_DB"]!;
+    string user = builder.Configuration["POSTGRES_USER"]!;
+    string password = builder.Configuration["POSTGRES_PASSWORD"]!;
     string connStr = $"Server={host};Port={port};Database={dbname};User Id={user};Password={password};Include Error Detail = true";
     options.UseNpgsql(connStr);
 });
 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    string host = builder.Configuration["AUTH_REDIS_PORT"]!;
-    string port = builder.Configuration["AUTH_REDIS_HOST"]!;
-    string password = builder.Configuration["AUTH_REDIS_PASSWORD"]!;
+    string host = builder.Configuration["REDIS_HOST"]!;
+    string port = builder.Configuration["REDIS_PORT"]!;
+    string password = builder.Configuration["REDIS_PASSWORD"]!;
     string connStr = $"{host}:{port},password={password}";
     options.Configuration = connStr;
 });
