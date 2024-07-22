@@ -2,13 +2,12 @@ package gapi
 
 import (
 	"context"
+	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
 	"net"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
-	"google.golang.org/grpc"
 	pb "workmap/gateway/internal/gapi/proto_gen"
 )
 
@@ -30,7 +29,7 @@ func startMockGRPCServer(t *testing.T) (net.Listener, *grpc.Server) {
 
 	go func() {
 		if err := server.Serve(lis); err != nil {
-			t.Fatalf("Failed to start gRPC server: %v", err)
+			t.Errorf("Failed to start gRPC server: %v", err)
 		}
 	}()
 
