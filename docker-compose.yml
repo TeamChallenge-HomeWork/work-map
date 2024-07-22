@@ -83,6 +83,3 @@ networks:
     driver: bridge
   work-map:
     driver: bridge
-
-volumes:
-  db_data:
