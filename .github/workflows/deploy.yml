@@ -1,0 +1,30 @@
+name: Deploy
+
+on:
+  pull_request:
+    branches: 
+      - dev
+    types:
+      - closed
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Connect Tailscal
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Do the deploy thing
+        run: |
+          ssh -o "StrictHostKeyChecking no" github@server "
+            cd /srv/work-map
+            git pull
+            docker compose up -d --build
+          "
