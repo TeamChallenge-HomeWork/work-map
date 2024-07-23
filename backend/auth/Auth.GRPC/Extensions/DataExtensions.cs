@@ -1,6 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Auth.GRPC.Data;
+using Microsoft.EntityFrameworkCore;
 
-namespace Auth.GRPC.Data
+namespace Auth.GRPC.Extensions
 {
     public static class Extensions
     {

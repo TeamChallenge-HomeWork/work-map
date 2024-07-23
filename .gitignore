@@ -79,7 +79,6 @@ artifacts/
 
 # Configuration files
 #appsettings.json
-launchSettings.json
 
 # Ignore .env files containing sensitive information
 *.env.development
@@ -91,6 +90,8 @@ docker-compose.override.yml
 # Ignore Docker related files and directories
 /.docker
 /docker.sock
+
+/db-data/
 
 # Ignore local Docker Compose configuration
 docker-compose.override.yml

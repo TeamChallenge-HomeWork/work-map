@@ -16,7 +16,7 @@ namespace Auth.GRPC.Services
                 new Claim(ClaimTypes.Email, user.Email)
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["AccessTokenKey"]!));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["JWT_ACCESS_SECRET_KEY"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -40,7 +40,7 @@ namespace Auth.GRPC.Services
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["RefreshTokenKey"]!));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["JWT_REFRESH_SECRET_KEY"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -60,7 +60,7 @@ namespace Auth.GRPC.Services
         public (ClaimsPrincipal, DateTime) GetPrincipalAndExpirationFromToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["RefreshTokenKey"]!));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["JWT_REFRESH_SECRET_KEY"]!));
 
             try
             {

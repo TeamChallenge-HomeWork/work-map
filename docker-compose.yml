@@ -2,28 +2,28 @@ services:
   auth-postgres:
     image: postgres
     container_name: auth-postgres
-    environment:
-      POSTGRES_DB: ${AUTH_POSTGRES_DB}
-      POSTGRES_USER: ${AUTH_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
+    env_file:
+      - backend/auth/AUTH.GRPC/.env
     ports:
-      - "${AUTH_POSTGRES_PORT}:5432"
+      - "5432:5432"
     networks:
       - auth
-    volumes:
-      - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
       interval: 3s
       timeout: 10s
       retries: 5
     restart: unless-stopped
 
   auth-redis:
-    image: redis
+    image: redis:latest
     container_name: auth-redis
+    env_file:
+      - backend/auth/AUTH.GRPC/.env
+    environment:
+      - REDIS_PASSWORD
     ports:
-      - "${AUTH_REDIS_PORT}:6379"
+      - "6379:6379"
     networks:
       - auth
     healthcheck:
@@ -38,26 +38,20 @@ services:
     build:
       context: .
       dockerfile: ./backend/auth/Auth.GRPC/Dockerfile
+    env_file:
+      - backend/auth/AUTH.GRPC/.env
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_HTTP_PORTS=8080
-      - ConnectionStrings__Postgres=Server=${AUTH_POSTGRES_HOST};Port=${AUTH_POSTGRES_PORT};Database=${AUTH_POSTGRES_DB};User Id=${AUTH_POSTGRES_USER};Password=${AUTH_POSTGRES_PASSWORD};Include Error Detail=true
-      - ConnectionStrings__Redis=${AUTH_REDIS_HOST}:${AUTH_REDIS_PORT}
-      - AccessTokenKey=${JWT_ACCESS_SECRET_KEY}
-      - RefreshTokenKey=${JWT_REFRESH_SECRET_KEY}
     depends_on:
       auth-postgres:
         condition: service_healthy
       auth-redis:
         condition: service_healthy
     ports:
-      - "${AUTH_SERVICE_PORT}:8080"
+      - "50051:8080"
     networks:
       - auth
       - work-map
-    volumes:
-      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
-      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
     restart: unless-stopped
 
   gateway:
@@ -89,6 +83,3 @@ networks:
     driver: bridge
   work-map:
     driver: bridge
-
-volumes:
-  db_data:
