@@ -90,6 +90,13 @@ func TestUserRegister(t *testing.T) {
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
+			name:           "wrong request body",
+			input:          user{},
+			mockResponse:   nil,
+			mockError:      nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
 			name: "missing email",
 			input: user{
 				Password: password,
@@ -183,6 +190,10 @@ func TestUserRegister(t *testing.T) {
 				t.Fatalf("failed to marshal input: %v", err)
 			}
 
+			if tt.name == "wrong request body" {
+				body = make([]byte, 0)
+			}
+
 			// TODO method and url is not necessary, but why?
 			req, err := http.NewRequest("POST", "/user/register", bytes.NewReader(body))
 			if err != nil {
@@ -265,6 +276,13 @@ func TestUserLogin(t *testing.T) {
 		},
 		{
 			name:           "empty request body",
+			input:          user{},
+			mockResponse:   nil,
+			mockError:      nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "wrong request body",
 			input:          user{},
 			mockResponse:   nil,
 			mockError:      nil,
@@ -362,6 +380,10 @@ func TestUserLogin(t *testing.T) {
 			body, err := json.Marshal(tt.input)
 			if err != nil {
 				t.Fatalf("failed to marshal input: %v", err)
+			}
+
+			if tt.name == "wrong request body" {
+				body = make([]byte, 0)
 			}
 
 			// TODO method and url is not necessary, but why?
