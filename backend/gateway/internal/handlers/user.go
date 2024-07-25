@@ -54,6 +54,37 @@ func getTTL(token string) (ttl time.Duration, err error) {
 	return time.Until(tExp), nil
 }
 
+func getEmail(token string) (email string, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			email = ""
+			err = errors.New("failed to get ttl")
+		}
+	}()
+
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return "", errors.New("cannot split the token string")
+	}
+
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return "", err
+	}
+
+	var payloadData map[string]interface{}
+	if err = json.Unmarshal(payload, &payloadData); err != nil {
+		return "", err
+	}
+
+	email, ok := payloadData["email"].(string)
+	if !ok {
+		return "", errors.New("exp not found in the token")
+	}
+
+	return email, nil
+}
+
 type user struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -117,12 +148,12 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cookie := &http.Cookie{
-		Name:     "refresh_token",
-		Value:    res.RefreshToken,
-		Path:     "/",
-		MaxAge:   604800,
-		Secure:   true,
-		HttpOnly: true,
+		Name:   "refresh_token",
+		Value:  res.RefreshToken,
+		Path:   "/",
+		MaxAge: 604800,
+		//Secure:   true,
+		//HttpOnly: true,
 		SameSite: 0,
 	}
 
@@ -195,6 +226,62 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, cookie)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", res.AccessToken))
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *Handler) UserRefreshToken(w http.ResponseWriter, r *http.Request) {
+	rt, err := r.Cookie("refresh_token")
+	if err != nil {
+		h.logger.Error("no refresh token cookies", zap.Error(err))
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	h.logger.Debug("refresh token", zap.Any("value", rt.Value), zap.Any("MaxAge", rt.MaxAge), zap.Any("HttpOnly", rt.HttpOnly))
+
+	res, err := h.auth.RefreshToken(context.TODO(), &pb.RefreshTokenRequest{
+		RefreshToken: rt.Value,
+	})
+	if err != nil {
+		if e, ok := status.FromError(err); ok {
+			h.logger.Error(
+				"failed to refresh token",
+				zap.String("code", e.Code().String()),
+				zap.String("description", e.Proto().Message),
+			)
+			http.Error(w, "Invalid request", http.StatusBadRequest)
+			return
+		} else {
+			h.logger.Error("unexpected error", zap.Error(err))
+		}
+
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	ttl, err := getTTL(res.AccessToken)
+	if err != nil {
+		h.logger.Error("failed to get ttl", zap.Error(err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	email, err := getEmail(res.AccessToken)
+	if err != nil {
+		h.logger.Error("failed to get email", zap.Error(err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	rRes := h.redis.Client.Set("access_token:"+res.AccessToken, email, ttl)
+	if rRes.Err() != nil {
+		h.logger.Error("failed to set access token", zap.String("token", res.AccessToken), zap.Error(rRes.Err()))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", res.AccessToken))
