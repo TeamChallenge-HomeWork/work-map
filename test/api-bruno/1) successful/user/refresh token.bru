@@ -1,0 +1,26 @@
+meta {
+  name: refresh token
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{http-s}}://{{host}}/user/refreshtoken
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{cookie}}
+}
+
+assert {
+  res.status: eq 200
+  res.body: eq ""
+}
+
+script:post-response {
+  const bearer = res.getHeader("authorization");
+  bru.setEnvVar("bearer", bearer);
+  bru.setEnvVar("access_token", bearer.replace("Bearer ", ""));
+}
