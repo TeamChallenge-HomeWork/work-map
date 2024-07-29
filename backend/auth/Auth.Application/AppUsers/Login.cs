@@ -30,7 +30,7 @@ namespace Auth.Application.AppUsers
                 _tokenService = tokenService;
                 _tokenCashRepository = tokenCashRepository;
             }
-            public async Task<Result<LoginResult>> Handle(Command command, CancellationToken cancellationToken)
+            public async Task<Result<LoginResult>> Handle(Command command, CancellationToken cancellationToken = default)
             {
                 var user = await _context.AppUsers.FirstOrDefaultAsync(user => user.Email == command.Request.Email);
 
