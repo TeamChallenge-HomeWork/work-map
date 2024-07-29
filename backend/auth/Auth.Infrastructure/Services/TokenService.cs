@@ -1,13 +1,13 @@
-﻿using Auth.GRPC.Models;
-using Grpc.Core;
+﻿using Auth.Domain;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace Auth.GRPC.Services
+namespace Auth.Infrastructure.Services
 {
-    public class TokenService(IConfiguration config)
+    public class TokenService(IConfiguration config): ITokenService
     {
         public async Task<string> CreateAccessToken(AppUser user)
         {
@@ -61,9 +61,9 @@ namespace Auth.GRPC.Services
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["JWT_REFRESH_SECRET_KEY"]!));
-
+/*
             try
-            {
+            {*/
                 var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {
                     ValidateIssuer = false,
@@ -79,7 +79,7 @@ namespace Auth.GRPC.Services
                 }
 
                 return (principal, jwtSecurityToken.ValidTo);
-            }
+/*            }
             catch (SecurityTokenSignatureKeyNotFoundException ex)
             {
                 throw new RpcException(new Status(StatusCode.Unauthenticated, "Token signature key not found"));
@@ -87,7 +87,7 @@ namespace Auth.GRPC.Services
             catch (Exception ex)
             {
                 throw new RpcException(new Status(StatusCode.Internal, "Internal server error"));
-            }
+            }*/
         }
 
     }

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
-using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
-namespace Auth.GRPC.Redis
+namespace Auth.Infrastructure.Redis
 {
     public class TokenRepository(IDistributedCache cache, ILogger<TokenRepository> logger) : ITokenRepository
     {

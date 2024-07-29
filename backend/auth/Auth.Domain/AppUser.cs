@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Auth.GRPC.Models
+﻿namespace Auth.Domain
 {
     public class AppUser
     {

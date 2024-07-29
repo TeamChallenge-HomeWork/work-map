@@ -8,6 +8,9 @@ WORKDIR /src
 ARG BUILD_CONFIGURATION=Release
 
 COPY ["backend/auth/Auth.GRPC/Auth.GRPC.csproj", "backend/auth/Auth.GRPC/"] 
+COPY ["backend/auth/Auth.Application/Auth.Application.csproj", "backend/auth/Auth.Application/"]
+COPY ["backend/auth/Auth.Domain/Auth.Domain.csproj", "backend/auth/Auth.Domain/"]
+COPY ["backend/auth/Auth.Infrastructure/Auth.Infrastructure.csproj", "backend/auth/Auth.Infrastructure/"]
 RUN dotnet restore "./backend/auth/Auth.GRPC/Auth.GRPC.csproj"
 
 COPY . .
