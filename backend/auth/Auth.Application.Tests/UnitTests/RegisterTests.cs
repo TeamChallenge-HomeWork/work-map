@@ -1,24 +1,21 @@
-﻿using Auth.Application.AppUsers;
-using Auth.Domain;
+﻿using Auth.Domain;
 using Auth.Infrastructure.Persistance;
 using Auth.Infrastructure.Redis;
 using Auth.Infrastructure.Services;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using Moq;
-using System;
 using static Auth.Application.AppUsers.Register;
 
 namespace Auth.Application.Tests.UnitTests
 {
-    public class Handlers
+    public class RegisterTests
     {
         private readonly DataContext _context;
 
         private readonly Mock<ITokenService> _tokenServiceMock;
         private readonly Mock<ITokenRepository> _tokenCashRepositoryMock;
-
-        public Handlers()
+        public RegisterTests()
         {
             var options = new DbContextOptionsBuilder<DataContext>()
             .UseInMemoryDatabase(databaseName: "AuthTestDb")
@@ -70,12 +67,12 @@ namespace Auth.Application.Tests.UnitTests
         public async Task Should_Return_Failure_When_Email_Already_Exists()
         {
             // Arrange
-
-            var email = "test@example.com";
+            var email = "exist@example.com";
             var password = "TestPassw0rd";
             var command = new Command { Request = new RegisterCommand(email, password) };
 
             _context.AppUsers.Add(new AppUser { Email = email, Password = "hashedPassword" });
+            await _context.SaveChangesAsync();
 
             // Act
             var result = await new Handler(_context, _tokenServiceMock.Object, _tokenCashRepositoryMock.Object).Handle(command);
@@ -89,7 +86,7 @@ namespace Auth.Application.Tests.UnitTests
         public async Task Should_Return_Success_When_Registration_Is_Valid()
         {
             // Arrange
-            var email = "test@example.com";
+            var email = "new@example.com";
             var password = "TestPassw0rd";
             var command = new Command { Request = new RegisterCommand(email, password) };
 
