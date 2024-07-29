@@ -32,7 +32,7 @@ namespace Auth.Application.AppUsers
                 _tokenService = tokenService;
                 _tokenCashRepository = tokenCashRepository;
             }
-            public async Task<Result<RegisterResult>> Handle(Command command, CancellationToken cancellationToken)
+            public async Task<Result<RegisterResult>> Handle(Command command, CancellationToken cancellationToken = default)
             {
                 if (string.IsNullOrEmpty(command.Request.Email) || !Regex.IsMatch(command.Request.Email, @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"))
                 {
@@ -63,7 +63,7 @@ namespace Auth.Application.AppUsers
                 string accessToken = await _tokenService.CreateAccessToken(newUser);
 
                 string refreshToken = await _tokenService.CreateRefreshToken(newUser);
-                await _tokenCashRepository.StoreToken(newUser.Id.ToString(), refreshToken);
+                await _tokenCashRepository.StoreToken(newUser.Id.ToString(), refreshToken, cancellationToken);
 
                 return Result<RegisterResult>.Success(new RegisterResult(accessToken, refreshToken));
             }

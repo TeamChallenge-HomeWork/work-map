@@ -41,7 +41,7 @@ namespace Auth.Application.AppUsers
 
                 string userId = principal.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
 
-                var storedRefreshToken = await _tokenCashRepository.GetToken(userId);
+                var storedRefreshToken = await _tokenCashRepository.GetToken(userId, cancellationToken);
                 if (storedRefreshToken != command.Request.RefreshToken)
                 {
                     return Result<RefreshTokenResult>.Failure(new RpcException(new Status(StatusCode.NotFound, "Refresh token not found")));

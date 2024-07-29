@@ -45,7 +45,7 @@ namespace Auth.Application.AppUsers
                 string accessToken = await _tokenService.CreateAccessToken(user);
 
                 string refreshToken = await _tokenService.CreateRefreshToken(user);
-                await _tokenCashRepository.StoreToken(user.Id.ToString(), refreshToken);
+                await _tokenCashRepository.StoreToken(user.Id.ToString(), refreshToken, cancellationToken);
 
                 return Result<LoginResult>.Success(new LoginResult(accessToken, refreshToken));
             }
