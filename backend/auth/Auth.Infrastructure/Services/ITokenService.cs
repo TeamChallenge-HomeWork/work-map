@@ -7,6 +7,6 @@ namespace Auth.Infrastructure.Services
     {
         Task<string> CreateAccessToken(AppUser user);
         Task<string> CreateRefreshToken(AppUser user);
-        (ClaimsPrincipal, DateTime) GetPrincipalAndExpirationFromToken(string token);
+        ClaimsPrincipal GetPrincipalFromToken(string token);
     }
 }

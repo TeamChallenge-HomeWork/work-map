@@ -32,12 +32,7 @@ namespace Auth.Application.AppUsers
             }
             public async Task<Result<RefreshTokenResult>> Handle(Command command, CancellationToken cancellationToken)
             {
-                var (principal, expiration) = _tokenService.GetPrincipalAndExpirationFromToken(command.Request.RefreshToken);
-
-                if (expiration < DateTime.UtcNow)
-                {
-                    return Result<RefreshTokenResult>.Failure(new RpcException(new Status(StatusCode.InvalidArgument, "Refresh token has expired")));
-                }
+                var principal = _tokenService.GetPrincipalFromToken(command.Request.RefreshToken);
 
                 string userId = principal.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
 

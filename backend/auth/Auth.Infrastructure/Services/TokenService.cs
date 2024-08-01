@@ -1,4 +1,5 @@
 ﻿using Auth.Domain;
+using Grpc.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -22,7 +23,7 @@ namespace Auth.Infrastructure.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(15),
+                Expires = DateTime.UtcNow.AddSeconds(2),
                 SigningCredentials = creds
             };
 
@@ -46,7 +47,7 @@ namespace Auth.Infrastructure.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddDays(15),
+                Expires = DateTime.UtcNow.AddSeconds(2),
                 SigningCredentials = creds
             };
 
@@ -57,37 +58,44 @@ namespace Auth.Infrastructure.Services
             return tokenHandler.WriteToken(token);
         }
 
-        public (ClaimsPrincipal, DateTime) GetPrincipalAndExpirationFromToken(string token)
+        public ClaimsPrincipal GetPrincipalFromToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["JWT_REFRESH_SECRET_KEY"]!));
-/*
+
             try
-            {*/
-                var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+            {
+                var validationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = false,
                     ValidateAudience = false,
-                    ValidateLifetime = true, // Ensure lifetime validation is enabled
+                    ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = key,
-                }, out SecurityToken securityToken);
+                    ClockSkew = TimeSpan.Zero
+                };
 
-                if (!(securityToken is JwtSecurityToken jwtSecurityToken))
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out SecurityToken securityToken);
+
+                if (securityToken is not JwtSecurityToken jwtSecurityToken)
                 {
-                    throw new SecurityTokenException("Invalid token");
+                    throw new RpcException(new Status(StatusCode.Unauthenticated, "Invalid token format"));
                 }
 
-                return (principal, jwtSecurityToken.ValidTo);
-/*            }
-            catch (SecurityTokenSignatureKeyNotFoundException ex)
-            {
-                throw new RpcException(new Status(StatusCode.Unauthenticated, "Token signature key not found"));
+                return principal;
             }
-            catch (Exception ex)
+            catch (SecurityTokenExpiredException)
             {
-                throw new RpcException(new Status(StatusCode.Internal, "Internal server error"));
-            }*/
+                throw new RpcException(new Status(StatusCode.Unauthenticated, "Token has expired"));
+            }
+            catch (SecurityTokenInvalidSignatureException)
+            {
+                throw new RpcException(new Status(StatusCode.Unauthenticated, "Invalid token signature"));
+            }
+            catch (Exception)
+            {
+                throw new RpcException(new Status(StatusCode.Unauthenticated, "An error occurred while validating the token"));
+            }
         }
 
     }
