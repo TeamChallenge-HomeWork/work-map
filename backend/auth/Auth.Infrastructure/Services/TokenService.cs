@@ -23,7 +23,7 @@ namespace Auth.Infrastructure.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddSeconds(2),
+                Expires = DateTime.UtcNow.AddMinutes(15),
                 SigningCredentials = creds
             };
 
@@ -47,7 +47,7 @@ namespace Auth.Infrastructure.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddSeconds(2),
+                Expires = DateTime.UtcNow.AddDays(15),
                 SigningCredentials = creds
             };
 
@@ -77,7 +77,7 @@ namespace Auth.Infrastructure.Services
 
                 var principal = tokenHandler.ValidateToken(token, validationParameters, out SecurityToken securityToken);
 
-                if (securityToken is not JwtSecurityToken jwtSecurityToken)
+                if (securityToken is not JwtSecurityToken)
                 {
                     throw new RpcException(new Status(StatusCode.Unauthenticated, "Invalid token format"));
                 }
@@ -91,6 +91,10 @@ namespace Auth.Infrastructure.Services
             catch (SecurityTokenInvalidSignatureException)
             {
                 throw new RpcException(new Status(StatusCode.Unauthenticated, "Invalid token signature"));
+            }
+            catch (SecurityTokenMalformedException)
+            {
+                throw new RpcException(new Status(StatusCode.Unauthenticated, "Invalid token format"));
             }
             catch (Exception)
             {
