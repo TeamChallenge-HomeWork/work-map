@@ -1,7 +1,8 @@
-﻿using Auth.GRPC.Data;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Auth.GRPC.Extensions
+namespace Auth.Infrastructure.Persistance.Extensions
 {
     public static class Extensions
     {
