@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Auth.Domain;
+﻿using Auth.Domain;
+using Microsoft.EntityFrameworkCore;
 
 namespace Auth.Infrastructure.Persistance
 {

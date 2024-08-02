@@ -1,6 +1,6 @@
-using Auth.GRPC.Extensions;
-using Auth.GRPC.Controllers;
 using Auth.Application.AppUsers;
+using Auth.GRPC.Controllers;
+using Auth.GRPC.Extensions;
 using Auth.Infrastructure;
 using Auth.Infrastructure.Persistance.Extensions;
 

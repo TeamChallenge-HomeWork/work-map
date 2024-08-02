@@ -14,7 +14,11 @@ namespace Auth.Infrastructure.Redis
 
         public async Task<bool> StoreToken(string userId, string token, CancellationToken cancellationToken = default)
         {
-            await cache.SetStringAsync(userId, token, cancellationToken);
+            var options = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(15)
+            };
+            await cache.SetStringAsync(userId, token, options, cancellationToken);
             logger.LogInformation("store token to cache");
             return true;
         }

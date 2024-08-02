@@ -43,29 +43,6 @@ namespace Auth.Application.Tests.UnitTests
             return user;
         }
 
-/*        [Fact]
-        public async Task Should_Return_Failure_When_RefreshToken_Is_Expired()
-        {
-            // Arrange
-            var userId = UserId;
-            await CreateUserAsync(userId);
-
-            var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, userId) };
-            var principal = new ClaimsPrincipal(new ClaimsIdentity(claims));
-            _tokenServiceMock.Setup(ts => ts.GetPrincipalAndExpirationFromToken(It.IsAny<string>()))
-                .Returns((principal, DateTime.UtcNow.AddMinutes(-10)));
-
-            // Act
-            var command = new RefreshToken.Command { Request = new RefreshToken.RefreshTokenCommand(RefreshToken) };
-            var handler = new RefreshToken.Handler(_context, _tokenServiceMock.Object, _tokenCashRepositoryMock.Object);
-
-            var result = await handler.Handle(command, CancellationToken.None);
-
-            // Assert
-            var exception = Assert.IsType<RpcException>(result.Error);
-            Assert.Equal(StatusCode.InvalidArgument, exception.StatusCode);
-        }*/
-
         [Fact]
         public async Task Should_Returen_Failure_When_User_Is_NotFound()
         {
@@ -75,7 +52,7 @@ namespace Auth.Application.Tests.UnitTests
             var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, userId) };
             var principal = new ClaimsPrincipal(new ClaimsIdentity(claims));
             _tokenServiceMock.Setup(ts => ts.GetPrincipalFromToken(It.IsAny<string>())).Returns((principal));
-            
+
             // Act
             var command = new RefreshToken.Command { Request = new RefreshToken.RefreshTokenCommand(RefreshToken) };
             var handler = new RefreshToken.Handler(_context, _tokenServiceMock.Object, _tokenCashRepositoryMock.Object);

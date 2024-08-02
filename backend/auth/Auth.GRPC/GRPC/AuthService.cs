@@ -1,6 +1,6 @@
-﻿using Grpc.Core;
+﻿using Auth.Application.AppUsers;
+using Grpc.Core;
 using MediatR;
-using Auth.Application.AppUsers;
 
 namespace Auth.GRPC.Controllers
 {

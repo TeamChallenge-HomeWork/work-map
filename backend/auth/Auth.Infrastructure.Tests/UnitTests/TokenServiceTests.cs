@@ -1,7 +1,6 @@
 ﻿using Auth.Domain;
 using Auth.Infrastructure.Services;
 using Grpc.Core;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Moq;
@@ -73,7 +72,7 @@ namespace Auth.Infrastructure.Tests.UnitTests
 
             var stoken = tokenHandler.WriteToken(token);
 
-            await Task.Delay(20); 
+            await Task.Delay(20);
 
             // Act & Assert
             var exception = Assert.Throws<RpcException>(() => _tokenService.GetPrincipalFromToken(stoken));

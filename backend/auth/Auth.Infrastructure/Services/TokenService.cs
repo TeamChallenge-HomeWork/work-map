@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Auth.Infrastructure.Services
 {
-    public class TokenService(IConfiguration config): ITokenService
+    public class TokenService(IConfiguration config) : ITokenService
     {
         public async Task<string> CreateAccessToken(AppUser user)
         {
