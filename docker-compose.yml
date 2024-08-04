@@ -3,7 +3,7 @@ services:
     image: postgres
     container_name: auth-postgres
     env_file:
-      - backend/auth/AUTH.GRPC/.env
+      - ./backend/auth/Auth.GRPC/.env
     ports:
       - "5432:5432"
     networks:
@@ -19,7 +19,7 @@ services:
     image: redis:latest
     container_name: auth-redis
     env_file:
-      - backend/auth/AUTH.GRPC/.env
+      - ./backend/auth/Auth.GRPC/.env
     environment:
       - REDIS_PASSWORD
     ports:
@@ -39,7 +39,7 @@ services:
       context: .
       dockerfile: ./backend/auth/Auth.GRPC/Dockerfile
     env_file:
-      - backend/auth/AUTH.GRPC/.env
+      - ./backend/auth/Auth.GRPC/.env
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     depends_on:

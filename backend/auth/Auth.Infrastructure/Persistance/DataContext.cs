@@ -1,7 +1,7 @@
-﻿using Auth.GRPC.Models;
+﻿using Auth.Domain;
 using Microsoft.EntityFrameworkCore;
 
-namespace Auth.GRPC.Data
+namespace Auth.Infrastructure.Persistance
 {
     public class DataContext : DbContext
     {
