@@ -22,6 +22,11 @@ body:json {
   }
 }
 
+assert {
+  res.status: eq 201
+  res.body: eq ""
+}
+
 script:pre-request {
   bru.setEnvVar("randomNumber",Math.random()*1000)
 }

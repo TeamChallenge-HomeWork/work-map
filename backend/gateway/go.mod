@@ -6,7 +6,6 @@ require (
 	github.com/alicebob/miniredis/v2 v2.33.0
 	github.com/brianvoe/gofakeit/v6 v6.28.0
 	github.com/go-redis/redis v6.15.9+incompatible
-	github.com/gomodule/redigo v1.9.2
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.21.0
@@ -16,7 +15,6 @@ require (
 
 require (
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
-	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
