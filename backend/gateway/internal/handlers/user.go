@@ -2,88 +2,15 @@ package handlers
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"net/http"
-	"strconv"
-	"strings"
-	"time"
 	pb "workmap/gateway/internal/gapi/proto_gen"
+	"workmap/gateway/internal/pkg/token"
 )
-
-func getTTL(token string) (ttl time.Duration, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			ttl = 0
-			err = errors.New("failed to get ttl")
-		}
-	}()
-
-	parts := strings.Split(token, ".")
-	if len(parts) != 3 {
-		return 0, errors.New("cannot split the token string")
-	}
-
-	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil {
-		return 0, err
-	}
-
-	var payloadData map[string]interface{}
-	if err = json.Unmarshal(payload, &payloadData); err != nil {
-		return 0, err
-	}
-
-	exp, ok := payloadData["exp"]
-	if !ok {
-		return 0, errors.New("exp not found in the token")
-	}
-
-	expString := strconv.FormatFloat(exp.(float64), 'f', -1, 64)
-	i, err := strconv.ParseInt(expString, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	tExp := time.Unix(i, 0)
-
-	return time.Until(tExp), nil
-}
-
-func getEmail(token string) (email string, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			email = ""
-			err = errors.New("failed to get ttl")
-		}
-	}()
-
-	parts := strings.Split(token, ".")
-	if len(parts) != 3 {
-		return "", errors.New("cannot split the token string")
-	}
-
-	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil {
-		return "", err
-	}
-
-	var payloadData map[string]interface{}
-	if err = json.Unmarshal(payload, &payloadData); err != nil {
-		return "", err
-	}
-
-	email, ok := payloadData["email"].(string)
-	if !ok {
-		return "", errors.New("exp not found in the token")
-	}
-
-	return email, nil
-}
 
 type user struct {
 	Email    string `json:"email"`
@@ -133,7 +60,7 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ttl, err := getTTL(res.AccessToken)
+	ttl, err := token.ExtractTTL(res.AccessToken)
 	if err != nil {
 		h.logger.Error("failed to get ttl", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -201,7 +128,7 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ttl, err := getTTL(res.AccessToken)
+	ttl, err := token.ExtractTTL(res.AccessToken)
 	if err != nil {
 		h.logger.Error("failed to get ttl", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -262,14 +189,14 @@ func (h *Handler) UserRefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ttl, err := getTTL(res.AccessToken)
+	ttl, err := token.ExtractTTL(res.AccessToken)
 	if err != nil {
 		h.logger.Error("failed to get ttl", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	email, err := getEmail(res.AccessToken)
+	email, err := token.ExtractEmail(res.AccessToken)
 	if err != nil {
 		h.logger.Error("failed to get email", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
