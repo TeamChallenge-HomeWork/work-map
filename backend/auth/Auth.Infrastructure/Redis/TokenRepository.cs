@@ -1,24 +1,24 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 
 namespace Auth.Infrastructure.Redis
 {
-    public class TokenRepository(IDistributedCache cache, ILogger<TokenRepository> logger) : ITokenRepository
+    public class TokenRepository(IConnectionMultiplexer connectionMultiplexer, ILogger<TokenRepository> logger) : ITokenRepository
     {
-        public async Task<string> GetToken(string userId, CancellationToken cancellationToken = default)
+        public async Task<string> GetToken(string userId)
         {
-            var token = await cache.GetStringAsync(userId, cancellationToken);
-            logger.LogInformation("Get token from cache");
+            var db = connectionMultiplexer.GetDatabase();
+            var token = await db.StringGetAsync(userId);
+            logger.LogInformation("Get token from Redis");
             return token;
         }
 
-        public async Task<bool> StoreToken(string userId, string token, CancellationToken cancellationToken = default)
+        public async Task<bool> StoreToken(string userId, string token)
         {
-            var options = new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(15)
-            };
-            await cache.SetStringAsync(userId, token, options, cancellationToken);
+            var db = connectionMultiplexer.GetDatabase();
+
+            TimeSpan ttl = TimeSpan.FromDays(15);
+            await db.StringSetAsync(userId, token, ttl);
             logger.LogInformation("store token to cache");
             return true;
         }

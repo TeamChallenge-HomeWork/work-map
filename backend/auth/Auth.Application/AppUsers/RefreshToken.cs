@@ -42,7 +42,7 @@ namespace Auth.Application.AppUsers
                     return Result<RefreshTokenResult>.Failure(new RpcException(new Status(StatusCode.NotFound, "User not found")));
                 }
 
-                var storedRefreshToken = await _tokenCashRepository.GetToken(userId, cancellationToken);
+                var storedRefreshToken = await _tokenCashRepository.GetToken(userId);
                 if (storedRefreshToken != command.Request.RefreshToken)
                 {
                     return Result<RefreshTokenResult>.Failure(new RpcException(new Status(StatusCode.NotFound, "Refresh token not found")));
