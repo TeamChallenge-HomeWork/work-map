@@ -58,5 +58,22 @@ namespace Auth.GRPC.Controllers
                 AccessToken = result.Value.AccessToken,
             };
         }
+
+        public override async Task<LogoutReply> Logout(LogoutRequest request, ServerCallContext context)
+        {
+            logger.LogInformation("Logout user with token: {Token}", request.RefreshToken);
+            var command = new Logout.Command { Request = new Logout.LogoutCommand(request.RefreshToken) };
+            var result = await mediator.Send(command);
+
+            if (!result.IsSuccess)
+            {
+                throw result.Error;
+            }
+
+            return new LogoutReply
+            {
+                IsSuccess = result.IsSuccess,
+            };
+        }
     }
 }
