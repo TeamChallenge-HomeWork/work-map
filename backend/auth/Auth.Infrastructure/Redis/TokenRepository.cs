@@ -38,5 +38,12 @@ namespace Auth.Infrastructure.Redis
             _logger.LogInformation("store token to cache");
             return true;
         }
+
+        public async Task<bool> IsExist(string userId)
+        {
+            bool exists = await _dataContext.KeyExistsAsync(userId);
+            _logger.LogInformation($"Token exists check for user {userId}: {exists}");
+            return exists;
+        }
     }
 }
