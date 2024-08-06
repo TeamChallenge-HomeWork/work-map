@@ -63,7 +63,7 @@ namespace Auth.Application.AppUsers
                 string accessToken = await _tokenService.CreateAccessToken(newUser);
 
                 string refreshToken = await _tokenService.CreateRefreshToken(newUser);
-                await _tokenCashRepository.StoreToken(newUser.Id.ToString(), refreshToken, cancellationToken);
+                await _tokenCashRepository.StoreToken(newUser.Id.ToString(), refreshToken);
 
                 return Result<RegisterResult>.Success(new RegisterResult(accessToken, refreshToken));
             }

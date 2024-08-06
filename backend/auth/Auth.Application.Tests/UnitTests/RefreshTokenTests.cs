@@ -32,7 +32,7 @@ namespace Auth.Application.Tests.UnitTests
             _tokenServiceMock.Setup(ts => ts.CreateAccessToken(It.IsAny<AppUser>())).ReturnsAsync(AccessToken);
 
             _tokenCashRepositoryMock = new Mock<ITokenRepository>();
-            _tokenCashRepositoryMock.Setup(tr => tr.GetToken(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(RefreshToken);
+            _tokenCashRepositoryMock.Setup(tr => tr.GetToken(It.IsAny<string>())).ReturnsAsync(RefreshToken);
         }
 
         private async Task<AppUser> CreateUserAsync(string userId)
@@ -70,7 +70,7 @@ namespace Auth.Application.Tests.UnitTests
             var userId = UserId;
             await CreateUserAsync(userId);
 
-            _tokenCashRepositoryMock.Setup(tcr => tcr.GetToken(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((string)null);
+            _tokenCashRepositoryMock.Setup(tcr => tcr.GetToken(It.IsAny<string>())).ReturnsAsync((string)null);
             _tokenServiceMock.Setup(tc => tc.CreateAccessToken(It.IsAny<AppUser>())).ReturnsAsync(AccessToken);
 
             var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, userId) };
@@ -108,7 +108,7 @@ namespace Auth.Application.Tests.UnitTests
 
             // Assert
             Assert.Equal(AccessToken, result.Value.AccessToken);
-            _tokenCashRepositoryMock.Verify(tr => tr.GetToken(userId, It.IsAny<CancellationToken>()), Times.Once);
+            _tokenCashRepositoryMock.Verify(tr => tr.GetToken(userId), Times.Once);
             _tokenServiceMock.Verify(ts => ts.CreateAccessToken(It.IsAny<AppUser>()), Times.Once);
 
         }

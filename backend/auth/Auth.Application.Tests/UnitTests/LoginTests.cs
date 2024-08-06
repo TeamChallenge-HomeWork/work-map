@@ -68,7 +68,7 @@ namespace Auth.Application.Tests.UnitTests
 
             _tokenServiceMock.Setup(ts => ts.CreateAccessToken(It.IsAny<AppUser>())).ReturnsAsync("accessToken");
             _tokenServiceMock.Setup(ts => ts.CreateRefreshToken(It.IsAny<AppUser>())).ReturnsAsync("refreshToken");
-            _tokenCashRepositoryMock.Setup(tr => tr.StoreToken(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            _tokenCashRepositoryMock.Setup(tr => tr.StoreToken(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
 
             // Act
             var result = await new Handler(_context, _tokenServiceMock.Object, _tokenCashRepositoryMock.Object).Handle(command);
@@ -79,7 +79,7 @@ namespace Auth.Application.Tests.UnitTests
             Assert.Equal("accessToken", result.Value.AccessToken);
             Assert.Equal("refreshToken", result.Value.RefreshToken);
 
-            _tokenCashRepositoryMock.Verify(tr => tr.StoreToken(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            _tokenCashRepositoryMock.Verify(tr => tr.StoreToken(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
     }
 }
