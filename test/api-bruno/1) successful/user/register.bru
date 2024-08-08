@@ -32,8 +32,6 @@ script:pre-request {
 }
 
 script:post-response {
-  bru.setEnvVar("access_token",res.body.access_token)
-  
   const access_token = res.getHeader("authorization").replace("Bearer ", "");
   bru.setEnvVar("access_token", access_token);
   
