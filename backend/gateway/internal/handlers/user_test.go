@@ -160,6 +160,19 @@ func TestUserRegister(t *testing.T) {
 			mockError:      nil,
 			expectedStatus: http.StatusInternalServerError,
 		},
+		{
+			name: "wrong refresh token",
+			input: user{
+				Email:    email,
+				Password: password,
+			},
+			mockResponse: &pb.RegisterReply{
+				RefreshToken: "wrongToken",
+				AccessToken:  at,
+			},
+			mockError:      nil,
+			expectedStatus: http.StatusInternalServerError,
+		},
 	}
 
 	for _, tt := range tests {
