@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"net/http"
+	"time"
 	pb "workmap/gateway/internal/gapi/proto_gen"
 	"workmap/gateway/internal/pkg/token"
 )
@@ -62,7 +63,7 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 
 	ttl, err := token.ExtractTTL(res.AccessToken)
 	if err != nil {
-		h.logger.Error("failed to get ttl", zap.Error(err))
+		h.logger.Error("failed to get ttl from access token", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -74,14 +75,22 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	rTtl, err := token.ExtractTTL(res.RefreshToken)
+	if err != nil {
+		h.logger.Error("failed to get ttl from refresh token", zap.Error(err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	exp := time.Now().Add(rTtl)
+
 	cookie := &http.Cookie{
-		Name:   "refresh_token",
-		Value:  res.RefreshToken,
-		Path:   "/",
-		MaxAge: 604800,
-		//Secure:   true,
-		//HttpOnly: true,
+		Name:     "refresh_token",
+		Value:    res.RefreshToken,
+		Path:     "/",
+		Secure:   true,
+		HttpOnly: true,
 		SameSite: 0,
+		Expires:  exp,
 	}
 
 	http.SetCookie(w, cookie)
