@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
-using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
-namespace Auth.GRPC.Redis
+namespace Auth.Infrastructure.Redis
 {
     public class TokenRepository(IDistributedCache cache, ILogger<TokenRepository> logger) : ITokenRepository
     {
@@ -14,7 +14,11 @@ namespace Auth.GRPC.Redis
 
         public async Task<bool> StoreToken(string userId, string token, CancellationToken cancellationToken = default)
         {
-            await cache.SetStringAsync(userId, token, cancellationToken);
+            var options = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(15)
+            };
+            await cache.SetStringAsync(userId, token, options, cancellationToken);
             logger.LogInformation("store token to cache");
             return true;
         }
