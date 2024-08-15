@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"net/http"
+	"strings"
 	"time"
 	pb "workmap/gateway/internal/gapi/proto_gen"
 	"workmap/gateway/internal/pkg/token"
@@ -84,11 +85,11 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 	exp := time.Now().Add(rTtl)
 
 	cookie := &http.Cookie{
-		Name:     "refresh_token",
-		Value:    res.RefreshToken,
-		Path:     "/",
-		Secure:   true,
-		HttpOnly: true,
+		Name:  "refresh_token",
+		Value: res.RefreshToken,
+		Path:  "/",
+		//Secure:   true,
+		//HttpOnly: true,
 		SameSite: 0,
 		Expires:  exp,
 	}
@@ -152,12 +153,12 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cookie := &http.Cookie{
-		Name:     "refresh_token",
-		Value:    res.RefreshToken,
-		Path:     "/",
-		MaxAge:   604800,
-		Secure:   true,
-		HttpOnly: true,
+		Name:   "refresh_token",
+		Value:  res.RefreshToken,
+		Path:   "/",
+		MaxAge: 604800,
+		//Secure:   true,
+		//HttpOnly: true,
 		SameSite: 0,
 	}
 
@@ -221,5 +222,56 @@ func (h *Handler) UserRefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", res.AccessToken))
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *Handler) UserLogout(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		h.logger.Error("no refresh token cookies", zap.Error(err))
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	at := r.Header.Get("Authorization")
+	if at == "" {
+		h.logger.Error("no access token in header", zap.Error(err))
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	} else {
+		at = strings.Replace(at, "Bearer ", "", -1)
+	}
+
+	fmt.Println(at)
+
+	h.logger.Debug("refresh token", zap.Any("value", cookie.Value), zap.Any("MaxAge", cookie.MaxAge), zap.Any("HttpOnly", cookie.HttpOnly))
+
+	res, err := h.auth.Logout(context.TODO(), &pb.LogoutRequest{
+		RefreshToken: cookie.Value,
+	})
+	if err != nil {
+		if e, ok := status.FromError(err); ok {
+			h.logger.Error(
+				"failed to refresh token",
+				zap.String("code", e.Code().String()),
+				zap.String("description", e.Proto().Message),
+			)
+			http.Error(w, e.Proto().Message, http.StatusBadRequest)
+			return
+		} else {
+			h.logger.Error("unexpected error", zap.Error(err))
+		}
+
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(res.IsSuccess)
+
+	rRes := h.redis.Client.Del("access_token:" + at)
+	if rRes.Err() != nil {
+		h.logger.Error("failed to delete access token", zap.Any("access_token", at))
+	}
+
+	w.Header().Set("Authorization", "")
 	w.WriteHeader(http.StatusOK)
 }

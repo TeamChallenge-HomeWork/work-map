@@ -33,6 +33,7 @@ func (r *Router) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /user/register", m.EnableCORS(h.UserRegister))
 	mux.HandleFunc("POST /user/login", m.EnableCORS(h.UserLogin)) // TODO add CheckAuth middleware and (?)redirect or delegate to FrontEnd
 	mux.HandleFunc("POST /user/refreshtoken", m.EnableCORS(h.UserRefreshToken))
+	mux.HandleFunc("POST /user/logout", m.EnableCORS(h.UserLogout))
 }
 
 func preflight(w http.ResponseWriter, r *http.Request) {}
