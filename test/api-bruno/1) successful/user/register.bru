@@ -32,14 +32,16 @@ script:pre-request {
 }
 
 script:post-response {
-  const access_token = res.getHeader("authorization").replace("Bearer ", "");
-  bru.setEnvVar("access_token", access_token);
+  if (res.status == 201) {
+    const access_token = res.getHeader("authorization").replace("Bearer ", "");
+    bru.setEnvVar("access_token", access_token);
   
-  const bearer = res.getHeader("authorization");
-  bru.setEnvVar("bearer", bearer);
+    const bearer = res.getHeader("authorization");
+    bru.setEnvVar("bearer", bearer);
   
-  const cookies = res.getHeader('set-cookie');
-  if(cookies) {
-    bru.setVar("cookie", cookies.join('; '));
+    const cookies = res.getHeader('set-cookie');
+    if(cookies) {
+      bru.setVar("cookie", cookies.join('; '));
+    }
   }
 }
