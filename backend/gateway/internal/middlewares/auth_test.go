@@ -1,23 +1,25 @@
-package middlewares_test
+package middlewares
 
 import (
 	"bytes"
-	"github.com/alicebob/miniredis/v2"
-	"github.com/go-redis/redis"
+	"errors"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"workmap/gateway/internal/middlewares"
-	"workmap/gateway/internal/store"
+	"workmap/gateway/internal/redis"
 )
 
-type MockRedisClient struct {
+type MockRedis struct {
 	mock.Mock
+}
+
+func (m *MockRedis) GetAccessToken(accessToken string) error {
+	args := m.Called(accessToken)
+
+	return args.Error(0)
 }
 
 type mockHandler struct {
@@ -33,57 +35,52 @@ func TestCheckAuth(t *testing.T) {
 	logger := zap.NewNop()
 
 	tests := []struct {
-		name          string
-		header        string
-		setupMock     func(m *MockRedisClient)
-		expectedCode  int
-		handlerCalled bool
+		name           string
+		header         string
+		expectedCode   int
+		mockRedisError error
+		handlerCalled  bool
 	}{
 		{
-			name:          "Valid Token",
-			header:        "Bearer valid-token",
-			expectedCode:  http.StatusOK,
-			handlerCalled: true,
+			name:           "Valid Token",
+			header:         "Bearer valid-token-string",
+			expectedCode:   http.StatusOK,
+			mockRedisError: nil,
+			handlerCalled:  true,
 		},
 		{
-			name:          "Invalid Token",
-			header:        "Bearer not-valid-token",
-			expectedCode:  http.StatusUnauthorized,
-			handlerCalled: false,
+			name:           "Token does not exist",
+			header:         "Bearer token-not-exist",
+			expectedCode:   http.StatusUnauthorized,
+			mockRedisError: errors.New("unauthorized"),
+			handlerCalled:  false,
 		},
 		{
-			name:          "Empty Authorization Header",
-			header:        "",
-			expectedCode:  http.StatusUnauthorized,
-			handlerCalled: false,
+			name:           "Empty Authorization Header",
+			header:         "",
+			expectedCode:   http.StatusUnauthorized,
+			mockRedisError: nil,
+			handlerCalled:  false,
 		},
 	}
-
-	server, _ := miniredis.Run()
-	rc := redis.NewClient(&redis.Options{
-		Addr: server.Addr(),
-	})
-
-	r := &store.Redis{Client: *rc}
-
-	err := r.Client.Set("access_token:valid-token", "test@token.com", time.Duration(10)*time.Second).Err()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cfg := &middlewares.Config{
-		Logger: logger,
-		Redis:  *r,
-	}
-	middleware := middlewares.New(cfg)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			mockRedis := new(MockRedis)
+			var mockRedisStore store.TokenGetter = mockRedis
 
-			req := httptest.NewRequest("POST", "/", bytes.NewBuffer([]byte{}))
-			if tt.header != "" {
-				req.Header.Set("Authorization", tt.header)
+			middleware := &Middleware{
+				logger: logger,
+				redis:  mockRedisStore,
 			}
+
+			mockRedis.On("GetAccessToken", mock.Anything).Return(tt.mockRedisError)
+
+			req, err := http.NewRequest("", "", bytes.NewBuffer([]byte{}))
+			if err != nil {
+				t.Error(err)
+			}
+			req.Header.Set("Authorization", tt.header)
 
 			w := httptest.NewRecorder()
 
