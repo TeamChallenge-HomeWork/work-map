@@ -10,13 +10,6 @@ import (
 )
 
 func ExtractTTL(token string) (ttl time.Duration, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			ttl = 0
-			err = errors.New("failed to get ttl")
-		}
-	}()
-
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
 		return 0, errors.New("cannot split the token string")
@@ -48,13 +41,6 @@ func ExtractTTL(token string) (ttl time.Duration, err error) {
 }
 
 func ExtractEmail(token string) (email string, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			email = ""
-			err = errors.New("failed to get ttl")
-		}
-	}()
-
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
 		return "", errors.New("cannot split the token string")
@@ -72,7 +58,7 @@ func ExtractEmail(token string) (email string, err error) {
 
 	email, ok := payloadData["email"].(string)
 	if !ok {
-		return "", errors.New("exp not found in the token")
+		return "", errors.New("email not found in the token")
 	}
 
 	return email, nil
