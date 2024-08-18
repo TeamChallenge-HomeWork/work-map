@@ -2,22 +2,19 @@ package handlers
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 	"testing"
 )
 
-type MockAuthServiceClient struct {
-	mock.Mock
-}
-
 func TestNew(t *testing.T) {
 	logger := zap.NewNop()
 	mockAuthService := new(MockAuthServiceClient)
+	mockRedis := new(MockRedis)
 
 	cfg := &Config{
-		Logger: logger,
-		Auth:   mockAuthService,
+		Logger:     logger,
+		Auth:       mockAuthService,
+		TokenStore: mockRedis,
 	}
 
 	handler := New(cfg)
