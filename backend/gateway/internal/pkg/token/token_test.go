@@ -1,7 +1,9 @@
 package token
 
 import (
+	"encoding/base64"
 	"errors"
+	"github.com/stretchr/testify/assert"
 	"strconv"
 	"testing"
 	"time"
@@ -40,6 +42,7 @@ func TestExtractTTL(t *testing.T) {
 		},
 	}
 
+	// TODO refactor this
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ttl, err := ExtractTTL(tt.input)
@@ -63,6 +66,49 @@ func TestExtractTTL(t *testing.T) {
 					t.Errorf("unexpected response: got %v, want %v", ttl, expectedTTL)
 				}
 			}
+		})
+	}
+}
+
+func TestExtractEmail(t *testing.T) {
+	tests := []struct {
+		name          string
+		input         string
+		expectedEmail string
+		expectedError error
+	}{
+		{
+			name:          "valid token",
+			input:         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImVtYWlsQGdtYWlsLmNvbSIsInN1YiI6IjEyMzQ1Njc4OTAiLCJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjJ9.MWI1UQVlomIW5wy_fR9YlofQAdX4yt_fvyx2lj5GlzE",
+			expectedEmail: "email@gmail.com",
+			expectedError: nil,
+		},
+		{
+			name:          "invalid token",
+			input:         "invalid.token",
+			expectedEmail: "",
+			expectedError: errors.New("cannot split the token string"),
+		},
+		{
+			name:          "wrong token",
+			input:         "not.a.token",
+			expectedEmail: "",
+			expectedError: base64.CorruptInputError(0),
+		},
+		{
+			name:          "token without \"email\" field",
+			input:         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+			expectedEmail: "",
+			expectedError: errors.New("email not found in the token"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			email, err := ExtractEmail(tt.input)
+
+			assert.Equal(t, tt.expectedError, err)
+			assert.Equal(t, tt.expectedEmail, email)
 		})
 	}
 }
