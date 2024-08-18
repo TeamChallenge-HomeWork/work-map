@@ -11,25 +11,20 @@ import (
 	"strings"
 	"time"
 	pb "workmap/gateway/internal/gapi/proto_gen"
+	"workmap/gateway/internal/models"
 	"workmap/gateway/internal/pkg/token"
 )
 
-type user struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
 func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
-	var u user
+	var u models.User
 	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
 		h.logger.Error("failed to decode request body", zap.Error(err))
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
 
-	// TODO add validate method with regex (for example)
-	if u.Email == "" || u.Password == "" {
-		h.logger.Error("data is not valid", zap.String("email", u.Email), zap.String("password", u.Password))
+	if err := u.Validate(); err != nil {
+		h.logger.Error("user data is not valid", zap.Error(err))
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
@@ -39,7 +34,6 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 		Password: u.Password,
 	})
 	if err != nil {
-		h.logger.Error("show error", zap.Error(err))
 		if e, ok := status.FromError(err); ok {
 			h.logger.Error(
 				"failed auth request",
@@ -48,30 +42,22 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 			)
 
 			if e.Code() == codes.AlreadyExists {
-				http.Error(w, "User already exist", http.StatusConflict)
+				http.Error(w, "User email taken", http.StatusConflict)
 				return
 			}
 
-			http.Error(w, "Invalid request", http.StatusBadRequest)
+			http.Error(w, e.Proto().Message, http.StatusBadRequest)
 			return
-		} else {
-			h.logger.Error("unexpected error", zap.Error(err))
 		}
 
+		h.logger.Error("unexpected error", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	ttl, err := token.ExtractTTL(res.AccessToken)
+	err = h.tokenStore.SaveAccessToken(res.AccessToken)
 	if err != nil {
-		h.logger.Error("failed to get ttl from access token", zap.Error(err))
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	rRes := h.redis.Client.Set("access_token:"+res.AccessToken, u.Email, ttl)
-	if rRes.Err() != nil {
-		h.logger.Error("failed to set access token", zap.String("token", res.AccessToken), zap.Error(rRes.Err()))
+		h.logger.Error("failed to save access token to redis store", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -96,22 +82,23 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, cookie)
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "text/plain")
 	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", res.AccessToken))
 	w.WriteHeader(http.StatusCreated)
+
+	h.logger.Info("user register success", zap.String("email", u.Email))
 }
 
 func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
-	var u user
+	var u models.User
 	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
 		h.logger.Error("failed to decode request body", zap.Error(err))
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
 
-	// TODO add validate method with regex (for example)
-	if u.Email == "" || u.Password == "" {
-		h.logger.Error("data is not valid", zap.String("email", u.Email), zap.String("password", u.Password))
+	if err := u.Validate(); err != nil {
+		h.logger.Error("user data is not valid", zap.Error(err))
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
@@ -128,26 +115,17 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 				zap.String("code", e.Code().String()),
 				zap.String("description", e.Proto().Message),
 			)
-			http.Error(w, "Invalid request", http.StatusBadRequest)
+			http.Error(w, e.Proto().Message, http.StatusBadRequest)
 			return
-		} else {
-			h.logger.Error("unexpected error", zap.Error(err))
 		}
 
+		h.logger.Error("unexpected error", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	ttl, err := token.ExtractTTL(res.AccessToken)
+	err = h.tokenStore.SaveAccessToken(res.AccessToken)
 	if err != nil {
-		h.logger.Error("failed to get ttl", zap.Error(err))
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	rRes := h.redis.Client.Set("access_token:"+res.AccessToken, u.Email, ttl)
-	if rRes.Err() != nil {
-		h.logger.Error("failed to set access token", zap.String("token", res.AccessToken), zap.Error(rRes.Err()))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -164,23 +142,24 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, cookie)
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "text/plain")
 	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", res.AccessToken))
 	w.WriteHeader(http.StatusOK)
+
+	h.logger.Info("user login success", zap.String("email", u.Email))
 }
 
 func (h *Handler) UserRefreshToken(w http.ResponseWriter, r *http.Request) {
-	rt, err := r.Cookie("refresh_token")
+	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
 		h.logger.Error("no refresh token cookies", zap.Error(err))
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-
-	h.logger.Debug("refresh token", zap.Any("value", rt.Value), zap.Any("MaxAge", rt.MaxAge), zap.Any("HttpOnly", rt.HttpOnly))
+	rt := cookie.Value
 
 	res, err := h.auth.RefreshToken(context.TODO(), &pb.RefreshTokenRequest{
-		RefreshToken: rt.Value,
+		RefreshToken: rt,
 	})
 	if err != nil {
 		if e, ok := status.FromError(err); ok {
@@ -189,40 +168,32 @@ func (h *Handler) UserRefreshToken(w http.ResponseWriter, r *http.Request) {
 				zap.String("code", e.Code().String()),
 				zap.String("description", e.Proto().Message),
 			)
-			http.Error(w, "Invalid request", http.StatusBadRequest)
+			http.Error(w, e.Proto().Message, http.StatusBadRequest)
 			return
-		} else {
-			h.logger.Error("unexpected error", zap.Error(err))
 		}
 
+		h.logger.Error("unexpected error", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	ttl, err := token.ExtractTTL(res.AccessToken)
+	err = h.tokenStore.SaveAccessToken(res.AccessToken)
 	if err != nil {
-		h.logger.Error("failed to get ttl", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", res.AccessToken))
+	w.WriteHeader(http.StatusOK)
 
 	email, err := token.ExtractEmail(res.AccessToken)
 	if err != nil {
-		h.logger.Error("failed to get email", zap.Error(err))
+		h.logger.Error("failed to extract email from access token", zap.String("refresh token", rt))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-
-	rRes := h.redis.Client.Set("access_token:"+res.AccessToken, email, ttl)
-	if rRes.Err() != nil {
-		h.logger.Error("failed to set access token", zap.String("token", res.AccessToken), zap.Error(rRes.Err()))
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", res.AccessToken))
-	w.WriteHeader(http.StatusOK)
+	h.logger.Info("user refresh token success", zap.String("email", email))
 }
 
 func (h *Handler) UserLogout(w http.ResponseWriter, r *http.Request) {
@@ -232,6 +203,7 @@ func (h *Handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	rt := cookie.Value
 
 	at := r.Header.Get("Authorization")
 	if at == "" {
@@ -242,12 +214,15 @@ func (h *Handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 		at = strings.Replace(at, "Bearer ", "", -1)
 	}
 
-	fmt.Println(at)
-
-	h.logger.Debug("refresh token", zap.Any("value", cookie.Value), zap.Any("MaxAge", cookie.MaxAge), zap.Any("HttpOnly", cookie.HttpOnly))
+	email, err := token.ExtractEmail(at)
+	if err != nil {
+		h.logger.Error("failed to extract email from access token", zap.String("access token", at))
+		http.Error(w, "Wrong auth token", http.StatusBadRequest)
+		return
+	}
 
 	res, err := h.auth.Logout(context.TODO(), &pb.LogoutRequest{
-		RefreshToken: cookie.Value,
+		RefreshToken: rt,
 	})
 	if err != nil {
 		if e, ok := status.FromError(err); ok {
@@ -265,13 +240,45 @@ func (h *Handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	fmt.Println(res.IsSuccess)
 
-	rRes := h.redis.Client.Del("access_token:" + at)
-	if rRes.Err() != nil {
-		h.logger.Error("failed to delete access token", zap.Any("access_token", at))
+	if res.IsSuccess {
+		err = h.tokenStore.DeleteAccessToken(at)
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
 	}
 
+	w.Header().Set("Content-Type", "text/plain")
 	w.Header().Set("Authorization", "")
 	w.WriteHeader(http.StatusOK)
+
+	h.logger.Info("user logout success", zap.String("email", email))
+}
+
+func (h *Handler) UserProfile(w http.ResponseWriter, r *http.Request) {
+	bearer := r.Header.Get("Authorization")
+	at := strings.TrimPrefix(bearer, "Bearer ")
+
+	email, err := token.ExtractEmail(at)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	w.WriteHeader(200)
+	w.Header().Set("Content-Type", "application/json")
+
+	res, err := json.Marshal(struct {
+		Email string `json:"email"`
+	}{
+		Email: email,
+	})
+	if err != nil {
+		fmt.Println("merr", err)
+	}
+
+	err = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		h.logger.Error(err.Error())
+	}
 }
