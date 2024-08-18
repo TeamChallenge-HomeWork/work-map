@@ -3,25 +3,25 @@ package handlers
 import (
 	"go.uber.org/zap"
 	pb "workmap/gateway/internal/gapi/proto_gen"
-	"workmap/gateway/internal/store"
+	"workmap/gateway/internal/redis"
 )
 
 type Config struct {
-	Logger *zap.Logger
-	Auth   pb.AuthServiceClient
-	Redis  store.Redis
+	Logger     *zap.Logger
+	Auth       pb.AuthServiceClient
+	TokenStore store.TokenStore
 }
 
 type Handler struct {
-	logger *zap.Logger
-	auth   pb.AuthServiceClient
-	redis  store.Redis
+	logger     *zap.Logger
+	auth       pb.AuthServiceClient
+	tokenStore store.TokenStore
 }
 
 func New(cfg *Config) *Handler {
 	return &Handler{
-		logger: cfg.Logger,
-		auth:   cfg.Auth,
-		redis:  cfg.Redis,
+		logger:     cfg.Logger,
+		auth:       cfg.Auth,
+		tokenStore: cfg.TokenStore,
 	}
 }
