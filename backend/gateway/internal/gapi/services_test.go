@@ -43,7 +43,7 @@ func TestNewAuthService(t *testing.T) {
 		defer server.Stop()
 
 		addr := lis.Addr().String()
-		t.Log(addr)
+
 		cfg := &AuthConfig{
 			Host: "localhost",
 			Port: addr[strings.LastIndex(addr, ":")+1:],
