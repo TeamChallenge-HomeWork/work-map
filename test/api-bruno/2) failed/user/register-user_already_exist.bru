@@ -20,5 +20,5 @@ body:json {
 assert {
   res.status: eq 409
   res.body: isString
-  res.body: matches User already exist
+  res.body: matches User email taken
 }

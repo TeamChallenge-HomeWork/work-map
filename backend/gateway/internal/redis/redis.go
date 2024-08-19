@@ -12,23 +12,27 @@ type RedisConfig struct {
 	Password string
 }
 
-type Redis struct {
-	Client redis.Client
+type RedisStore struct {
+	client *redis.Client
 }
 
-func NewRedis(cfg *RedisConfig) (Redis, error) {
+func NewRedis(cfg *RedisConfig) (RedisStore, error) {
 	addr := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
 	var client = redis.NewClient(&redis.Options{
 		Addr:     addr,
 		Password: cfg.Password,
 		DB:       0,
 	})
-
 	if client == nil {
-		return Redis{}, errors.New("cannot run redis")
+		return RedisStore{}, errors.New("cannot run redis")
 	}
 
-	return Redis{
-		Client: *client,
+	err := client.Ping().Err()
+	if err != nil {
+		return RedisStore{}, errors.New("cannot ping to redis")
+	}
+
+	return RedisStore{
+		client: client,
 	}, nil
 }

@@ -3,19 +3,19 @@ package middlewares
 import (
 	"go.uber.org/zap"
 	pb "workmap/gateway/internal/gapi/proto_gen"
-	"workmap/gateway/internal/store"
+	"workmap/gateway/internal/redis"
 )
 
 type Config struct {
 	Logger *zap.Logger
 	Auth   pb.AuthServiceClient
-	Redis  store.Redis
+	Redis  store.TokenGetter
 }
 
 type Middleware struct {
 	logger *zap.Logger
 	auth   pb.AuthServiceClient
-	redis  store.Redis
+	redis  store.TokenGetter
 }
 
 func New(cfg *Config) *Middleware {

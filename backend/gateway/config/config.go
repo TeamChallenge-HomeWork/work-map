@@ -6,9 +6,9 @@ import (
 	"workmap/gateway/internal/gapi"
 	"workmap/gateway/internal/handlers"
 	"workmap/gateway/internal/middlewares"
+	"workmap/gateway/internal/redis"
 	"workmap/gateway/internal/routes"
 	"workmap/gateway/internal/server"
-	"workmap/gateway/internal/store"
 )
 
 type (
@@ -47,8 +47,6 @@ func New(logger *zap.Logger) *Config {
 		logger.Fatal("failed to unmarshal into config struct", zap.Error(err))
 	}
 
-	// TODO refactor this shit because output is: config struct   {"": {"Port":"100.104.232.63","Port":"8080"}}
-	logger.Debug("config struct", zap.Any("", cfg))
 	return &cfg
 }
 
@@ -75,15 +73,15 @@ func (cfg *Config) NewServices(logger *zap.Logger) *Services {
 	}
 
 	h := handlers.New(&handlers.Config{
-		Logger: logger,
-		Auth:   auth,
-		Redis:  redis,
+		Logger:     logger,
+		Auth:       auth,
+		TokenStore: &redis,
 	})
 
 	m := middlewares.New(&middlewares.Config{
 		Logger: logger,
 		Auth:   auth,
-		Redis:  redis,
+		Redis:  &redis,
 	})
 
 	r := routes.New(&routes.Config{
