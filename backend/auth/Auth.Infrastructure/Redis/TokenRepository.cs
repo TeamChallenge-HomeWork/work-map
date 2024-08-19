@@ -1,26 +1,49 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 
 namespace Auth.Infrastructure.Redis
 {
-    public class TokenRepository(IDistributedCache cache, ILogger<TokenRepository> logger) : ITokenRepository
+    public class TokenRepository : ITokenRepository
     {
-        public async Task<string> GetToken(string userId, CancellationToken cancellationToken = default)
+        private readonly IConnectionMultiplexer _connectionMultiplexer;
+        private readonly ILogger<TokenRepository> _logger;
+
+        private readonly IDatabase _dataContext;
+
+        public TokenRepository(IConnectionMultiplexer connectionMultiplexer, ILogger<TokenRepository> logger)
         {
-            var token = await cache.GetStringAsync(userId, cancellationToken);
-            logger.LogInformation("Get token from cache");
+            _connectionMultiplexer = connectionMultiplexer;
+            _logger = logger;
+
+            _dataContext = _connectionMultiplexer.GetDatabase();
+        }
+        public async Task<string> GetToken(string userId)
+        {
+            var token = await _dataContext.StringGetAsync(userId);
+            _logger.LogInformation("Get token from Redis");
             return token;
         }
 
-        public async Task<bool> StoreToken(string userId, string token, CancellationToken cancellationToken = default)
+        public async Task<bool> RemoveToken(string userId)
         {
-            var options = new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(15)
-            };
-            await cache.SetStringAsync(userId, token, options, cancellationToken);
-            logger.LogInformation("store token to cache");
+            bool isSuccess = await _dataContext.KeyDeleteAsync(userId);
+            _logger.LogInformation("Remove token from Redis");
+            return isSuccess;
+        }
+
+        public async Task<bool> StoreToken(string userId, string token)
+        {
+            TimeSpan ttl = TimeSpan.FromDays(15);
+            await _dataContext.StringSetAsync(userId, token, ttl);
+            _logger.LogInformation("store token to cache");
             return true;
+        }
+
+        public async Task<bool> IsExist(string userId)
+        {
+            bool exists = await _dataContext.KeyExistsAsync(userId);
+            _logger.LogInformation($"Token exists check for user {userId}: {exists}");
+            return exists;
         }
     }
 }

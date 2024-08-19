@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
 using System.Text;
 
 namespace Auth.Infrastructure
@@ -25,14 +27,12 @@ namespace Auth.Infrastructure
                 options.UseNpgsql(connStr);
             });
 
-            services.AddStackExchangeRedisCache(options =>
-            {
-                string host = configuration["REDIS_HOST"]!;
-                string port = configuration["REDIS_PORT"]!;
-                string password = configuration["REDIS_PASSWORD"]!;
-                string connStr = $"{host}:{port},password={password}";
-                options.Configuration = connStr;
-            });
+            string redisHost = configuration["REDIS_HOST"]!;
+            string redisPort = configuration["REDIS_PORT"]!;
+            string redisPassword = configuration["REDIS_PASSWORD"]!;
+            string redisConnStr = $"{redisHost}:{redisPort},password={redisPassword}";
+            services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnStr));
+
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<ITokenRepository, TokenRepository>();
 

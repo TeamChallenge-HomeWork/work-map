@@ -35,9 +35,12 @@ namespace Auth.Application.AppUsers
                 var user = await _context.AppUsers.FirstOrDefaultAsync(user => user.Email == command.Request.Email);
 
                 if (user == null)
-                {
                     return Result<LoginResult>.Failure(new RpcException(new Status(StatusCode.Unauthenticated, "User not found")));
-                }
+
+                bool isLoggedIn = await _tokenCashRepository.IsExist(user.Id.ToString());
+
+                if (isLoggedIn) 
+                    return Result<LoginResult>.Failure(new RpcException(new Status(StatusCode.AlreadyExists, "User have already logged in")));
 
                 if (!BCrypt.Net.BCrypt.Verify(command.Request.Password, user.Password))
                     return Result<LoginResult>.Failure(new RpcException(new Status(StatusCode.Unauthenticated, "User not found")));
@@ -45,7 +48,7 @@ namespace Auth.Application.AppUsers
                 string accessToken = await _tokenService.CreateAccessToken(user);
 
                 string refreshToken = await _tokenService.CreateRefreshToken(user);
-                await _tokenCashRepository.StoreToken(user.Id.ToString(), refreshToken, cancellationToken);
+                await _tokenCashRepository.StoreToken(user.Id.ToString(), refreshToken);
 
                 return Result<LoginResult>.Success(new LoginResult(accessToken, refreshToken));
             }
