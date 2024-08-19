@@ -26,13 +26,13 @@ func TestExtractTTL(t *testing.T) {
 			name:          "invalid token",
 			input:         "invalid.token",
 			exp:           0,
-			expectedError: errors.New("cannot split the token string"),
+			expectedError: errors.New("invalid token format"),
 		},
 		{
 			name:          "wrong token",
 			input:         "not.a.token",
 			exp:           0,
-			expectedError: errors.New("illegal base64 data at input byte 0"),
+			expectedError: errors.New("illegal base64 data at input byte 0"), // TODO change to "invalid token"
 		},
 		{
 			name:          "token without \"exp\" field",
@@ -45,7 +45,8 @@ func TestExtractTTL(t *testing.T) {
 	// TODO refactor this
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ttl, err := ExtractTTL(tt.input)
+			extractor := &AccessTokenExtractor{}
+			ttl, err := extractor.ExtractTTL(tt.input)
 
 			if tt.expectedError != nil {
 				if err.Error() != tt.expectedError.Error() {
@@ -87,7 +88,7 @@ func TestExtractEmail(t *testing.T) {
 			name:          "invalid token",
 			input:         "invalid.token",
 			expectedEmail: "",
-			expectedError: errors.New("cannot split the token string"),
+			expectedError: errors.New("invalid token format"),
 		},
 		{
 			name:          "wrong token",
@@ -104,8 +105,9 @@ func TestExtractEmail(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		extractor := &AccessTokenExtractor{}
 		t.Run(tt.name, func(t *testing.T) {
-			email, err := ExtractEmail(tt.input)
+			email, err := extractor.ExtractEmail(tt.input)
 
 			assert.Equal(t, tt.expectedError, err)
 			assert.Equal(t, tt.expectedEmail, email)

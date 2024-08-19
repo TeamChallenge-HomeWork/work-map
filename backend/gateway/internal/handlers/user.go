@@ -22,6 +22,7 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
+	defer r.Body.Close()
 
 	if err := u.Validate(); err != nil {
 		h.logger.Error("user data is not valid", zap.Error(err))
@@ -62,7 +63,8 @@ func (h *Handler) UserRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rTtl, err := token.ExtractTTL(res.RefreshToken)
+	e := &token.AccessTokenExtractor{}
+	rTtl, err := e.ExtractTTL(res.RefreshToken)
 	if err != nil {
 		h.logger.Error("failed to get ttl from refresh token", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -96,6 +98,7 @@ func (h *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
+	defer r.Body.Close()
 
 	if err := u.Validate(); err != nil {
 		h.logger.Error("user data is not valid", zap.Error(err))
@@ -187,7 +190,8 @@ func (h *Handler) UserRefreshToken(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", res.AccessToken))
 	w.WriteHeader(http.StatusOK)
 
-	email, err := token.ExtractEmail(res.AccessToken)
+	e := &token.AccessTokenExtractor{}
+	email, err := e.ExtractEmail(res.AccessToken)
 	if err != nil {
 		h.logger.Error("failed to extract email from access token", zap.String("refresh token", rt))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -214,7 +218,8 @@ func (h *Handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 		at = strings.Replace(at, "Bearer ", "", -1)
 	}
 
-	email, err := token.ExtractEmail(at)
+	e := &token.AccessTokenExtractor{}
+	email, err := e.ExtractEmail(at)
 	if err != nil {
 		h.logger.Error("failed to extract email from access token", zap.String("access token", at))
 		http.Error(w, "Wrong auth token", http.StatusBadRequest)
@@ -260,7 +265,8 @@ func (h *Handler) UserProfile(w http.ResponseWriter, r *http.Request) {
 	bearer := r.Header.Get("Authorization")
 	at := strings.TrimPrefix(bearer, "Bearer ")
 
-	email, err := token.ExtractEmail(at)
+	e := &token.AccessTokenExtractor{}
+	email, err := e.ExtractEmail(at)
 	if err != nil {
 		fmt.Println(err)
 	}

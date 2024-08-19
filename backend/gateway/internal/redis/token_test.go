@@ -62,7 +62,7 @@ func TestSaveAccessToken(t *testing.T) {
 		{
 			name:          "invalid token",
 			token:         "invalid_token",
-			expectedError: errors.New("cannot split the token string"),
+			expectedError: errors.New("invalid token format"),
 		},
 		{
 			name:          "email does not exist",
@@ -107,6 +107,7 @@ func TestDeleteAccessToken(t *testing.T) {
 		},
 	}
 
+	// TODO use mock
 	s, err := miniredis.Run()
 	require.NoError(t, err)
 	defer s.Close()

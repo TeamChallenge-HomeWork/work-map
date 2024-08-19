@@ -7,13 +7,21 @@ import (
 )
 
 type TokenStore interface {
-	GetAccessToken(accessToken string) error
-	SaveAccessToken(accessToken string) error
-	DeleteAccessToken(accessToken string) error
+	TokenGetter
+	TokenSetter
+	TokenDeleter
 }
 
 type TokenGetter interface {
 	GetAccessToken(accessToken string) error
+}
+
+type TokenSetter interface {
+	SaveAccessToken(accessToken string) error
+}
+
+type TokenDeleter interface {
+	DeleteAccessToken(accessToken string) error
 }
 
 func (r *RedisStore) GetAccessToken(accessToken string) error {
@@ -30,12 +38,13 @@ func (r *RedisStore) GetAccessToken(accessToken string) error {
 }
 
 func (r *RedisStore) SaveAccessToken(accessToken string) error {
-	ttl, err := token.ExtractTTL(accessToken)
+	extractor := token.AccessTokenExtractor{}
+	ttl, err := extractor.ExtractTTL(accessToken)
 	if err != nil {
 		return err
 	}
 
-	email, err := token.ExtractEmail(accessToken)
+	email, err := extractor.ExtractEmail(accessToken)
 	if err != nil {
 		return err
 	}
