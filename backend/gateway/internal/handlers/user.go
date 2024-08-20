@@ -268,23 +268,19 @@ func (h *Handler) UserProfile(w http.ResponseWriter, r *http.Request) {
 	e := &token.AccessTokenExtractor{}
 	email, err := e.ExtractEmail(at)
 	if err != nil {
-		fmt.Println(err)
+		h.logger.Error("failed to extract email", zap.Error(err))
+		http.Error(w, "Bad request", http.StatusBadRequest)
 	}
 
 	w.WriteHeader(200)
 	w.Header().Set("Content-Type", "application/json")
 
-	res, err := json.Marshal(struct {
+	err = json.NewEncoder(w).Encode(struct {
 		Email string `json:"email"`
 	}{
 		Email: email,
 	})
 	if err != nil {
-		fmt.Println("merr", err)
-	}
-
-	err = json.NewEncoder(w).Encode(res)
-	if err != nil {
-		h.logger.Error(err.Error())
+		h.logger.Error("failed to encode response", zap.Error(err))
 	}
 }
