@@ -16,7 +16,7 @@ type MockRedis struct {
 	mock.Mock
 }
 
-func (m *MockRedis) GetAccessToken(accessToken string) error {
+func (m *MockRedis) CheckAccessToken(accessToken string) error {
 	args := m.Called(accessToken)
 
 	return args.Error(0)
@@ -67,14 +67,14 @@ func TestCheckAuth(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRedis := new(MockRedis)
-			var mockRedisStore store.TokenGetter = mockRedis
+			var mockRedisStore store.TokenChecker = mockRedis
 
 			middleware := &Middleware{
 				logger: logger,
 				redis:  mockRedisStore,
 			}
 
-			mockRedis.On("GetAccessToken", mock.Anything).Return(tt.mockRedisError)
+			mockRedis.On("CheckAccessToken", mock.Anything).Return(tt.mockRedisError)
 
 			req, err := http.NewRequest("", "", bytes.NewBuffer([]byte{}))
 			if err != nil {

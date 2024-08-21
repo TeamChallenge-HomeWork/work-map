@@ -7,31 +7,22 @@ import (
 )
 
 type TokenStore interface {
-	TokenGetter
-	TokenSetter
-	TokenDeleter
-}
-
-type TokenGetter interface {
-	GetAccessToken(accessToken string) error
-}
-
-type TokenSetter interface {
+	TokenChecker
 	SaveAccessToken(accessToken string) error
-}
-
-type TokenDeleter interface {
 	DeleteAccessToken(accessToken string) error
 }
 
-func (r *RedisStore) GetAccessToken(accessToken string) error {
-	res := r.client.Get("access_token:" + accessToken)
-	if res.Err() != nil {
-		if res.Err() == redis.Nil {
+type TokenChecker interface {
+	CheckAccessToken(accessToken string) error
+}
+
+func (r *RedisStore) CheckAccessToken(accessToken string) error {
+	err := r.client.Get("access_token:" + accessToken).Err()
+	if err != nil {
+		if err == redis.Nil {
 			return errors.New("unauthorized")
 		}
-
-		return res.Err()
+		return err
 	}
 
 	return nil
@@ -49,18 +40,18 @@ func (r *RedisStore) SaveAccessToken(accessToken string) error {
 		return err
 	}
 
-	res := r.client.Set("access_token:"+accessToken, email, ttl)
-	if res.Err() != nil {
-		return res.Err()
+	err = r.client.Set("access_token:"+accessToken, email, ttl).Err()
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (r *RedisStore) DeleteAccessToken(accessToken string) error {
-	res := r.client.Del("access_token:" + accessToken)
-	if res.Err() != nil {
-		return res.Err()
+	err := r.client.Del("access_token:" + accessToken).Err()
+	if err != nil {
+		return err
 	}
 
 	return nil

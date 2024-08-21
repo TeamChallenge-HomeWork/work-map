@@ -17,7 +17,7 @@ func (m *Middleware) CheckAuth(next http.HandlerFunc) http.HandlerFunc {
 		m.logger.Debug(tokenString)
 		token := strings.TrimPrefix(tokenString, "Bearer ")
 
-		err := m.redis.GetAccessToken(token)
+		err := m.redis.CheckAccessToken(token)
 		if err != nil {
 			m.logger.Error("token not found", zap.Error(err))
 			http.Error(w, "unauthorized", http.StatusUnauthorized)

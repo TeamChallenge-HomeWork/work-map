@@ -42,7 +42,7 @@ func TestGetAccessToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err = store.GetAccessToken(tt.token)
+			err = store.CheckAccessToken(tt.token)
 			assert.Equal(t, tt.expectedError, err)
 		})
 	}

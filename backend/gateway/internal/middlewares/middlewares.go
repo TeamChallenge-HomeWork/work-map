@@ -9,13 +9,13 @@ import (
 type Config struct {
 	Logger *zap.Logger
 	Auth   pb.AuthServiceClient
-	Redis  store.TokenGetter
+	Redis  store.TokenChecker
 }
 
 type Middleware struct {
 	logger *zap.Logger
 	auth   pb.AuthServiceClient
-	redis  store.TokenGetter
+	redis  store.TokenChecker
 }
 
 func New(cfg *Config) *Middleware {

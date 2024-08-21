@@ -38,7 +38,7 @@ type MockRedis struct {
 	mock.Mock
 }
 
-func (m *MockRedis) GetAccessToken(accessToken string) error {
+func (m *MockRedis) CheckAccessToken(accessToken string) error {
 	args := m.Called(accessToken)
 
 	return args.Error(0)
