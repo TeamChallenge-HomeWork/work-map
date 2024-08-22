@@ -1,0 +1,48 @@
+name: Pre-Deploy
+
+on:
+  pull_request:
+    branches: 
+      - dev
+    types:
+      - closed
+
+jobs:
+  pre-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Compose
+      run: docker-compose --version
+
+    - name: Create .env file for auth service
+      run: |
+        echo "JWT_ACCESS_SECRET_KEY=${{ secrets.JWT_ACCESS_SECRET_KEY }}" >> ../../backend/auth/Auth.GRPC/.env
+        echo "JWT_REFRESH_SECRET_KEY=${{ secrets.JWT_REFRESH_SECRET_KEY }}" >> ../../backend/auth/Auth.GRPC/.env
+        echo "SERVICE_PORT=${{ values.AUTH_SERVICE_PORT }}" >> ../../backend/auth/Auth.GRPC/.env
+        echo "SERVICE_HOST=${{ values.AUTH_SERVICE_HOST }}" >> ../../backend/auth/Auth.GRPC/.env
+        echo "POSTGRES_PORT=${{ values.AUTH_POSTGRES_PORT }}" >> ../../backend/auth/Auth.GRPC/.env
+        echo "POSTGRES_HOST=${{ values.AUTH_POSTGRES_HOST }}" >> ../../backend/auth/Auth.GRPC/.env
+        echo "POSTGRES_DB=${{ secrets.AUTH_POSTGRES_DB }}" >> ../../backend/auth/Auth.GRPC/.env
+        echo "POSTGRES_USER=${{ secrets.AUTH_POSTGRES_USER }}" >> ../../backend/auth/Auth.GRPC/.env
+        echo "POSTGRES_PASSWORD=${{ secrets.AUTH_POSTGRES_PASSWORD }}" >> ../../backend/auth/Auth.GRPC/.env
+        echo "REDIS_PORT=${{ values.AUTH_REDIS_PORT }}" >> ../../backend/auth/Auth.GRPC/.env
+        echo "REDIS_HOST=${{ values.AUTH_REDIS_HOST }}" >> ../../backend/auth/Auth.GRPC/.env
+        echo "REDIS_PASSWORD=${{ secrets.AUTH_REDIS_PASSWORD }}" >> ../../backend/auth/Auth.GRPC/.env
+
+    - name: Create .env file for gateway
+      run: |
+        echo "PORT=${{ values.GATEWAY_PORT }}" >> ../../backend/gateway/.env
+        echo "AUTH_SERVICE_PORT=${{ values.GATEWAY_AUTH_SERVICE_PORT }}" >> ../../backend/gateway/.env
+        echo "REDIS_PORT=${{ values.GATEWAY_REDIS_PORT}}" >> ../../backend/gateway/.env
+        echo "REDIS_HOST=${{ values.GATEWAY_REDIS_HOST }}" >> ../../backend/gateway/.env
+        echo "REDIS_PASSWORD=${{ secrets.GATEWAY_REDIS_PASSWORD }}" >> ../../backend/gateway/.env
+
+    - name: Docker Compose Up
+      run: docker-compose up -d --build
+      working-directory: ../../backend
+
+    - name: Check Docker Container Status
+      run: docker ps
+      working-directory: ../../backend
