@@ -2,10 +2,13 @@ name: Pre-Deploy
 
 on:
   pull_request:
-    branches: 
+    branches:
+      - main
       - dev
+  workflow_run:
+    workflows: ["Auth", "Gateway"]
     types:
-      - closed
+      - completed
 
 jobs:
   pre-deploy:
@@ -21,31 +24,35 @@ jobs:
 
     - name: Create .env file for auth service
       run: |
-        echo "JWT_ACCESS_SECRET_KEY=${{ secrets.JWT_ACCESS_SECRET_KEY }}" >> ../../backend/auth/Auth.GRPC/.env
-        echo "JWT_REFRESH_SECRET_KEY=${{ secrets.JWT_REFRESH_SECRET_KEY }}" >> ../../backend/auth/Auth.GRPC/.env
-        echo "SERVICE_PORT=${{ vars.AUTH_SERVICE_PORT }}" >> ../../backend/auth/Auth.GRPC/.env
-        echo "SERVICE_HOST=${{ vars.AUTH_SERVICE_HOST }}" >> ../../backend/auth/Auth.GRPC/.env
-        echo "POSTGRES_PORT=${{ vars.AUTH_POSTGRES_PORT }}" >> ../../backend/auth/Auth.GRPC/.env
-        echo "POSTGRES_HOST=${{ vars.AUTH_POSTGRES_HOST }}" >> ../../backend/auth/Auth.GRPC/.env
-        echo "POSTGRES_DB=${{ secrets.AUTH_POSTGRES_DB }}" >> ../../backend/auth/Auth.GRPC/.env
-        echo "POSTGRES_USER=${{ secrets.AUTH_POSTGRES_USER }}" >> ../../backend/auth/Auth.GRPC/.env
-        echo "POSTGRES_PASSWORD=${{ secrets.AUTH_POSTGRES_PASSWORD }}" >> ../../backend/auth/Auth.GRPC/.env
-        echo "REDIS_PORT=${{ vars.AUTH_REDIS_PORT }}" >> ../../backend/auth/Auth.GRPC/.env
-        echo "REDIS_HOST=${{ vars.AUTH_REDIS_HOST }}" >> ../../backend/auth/Auth.GRPC/.env
-        echo "REDIS_PASSWORD=${{ secrets.AUTH_REDIS_PASSWORD }}" >> ../../backend/auth/Auth.GRPC/.env
+        mkdir -p backend/auth/Auth.GRPC
+        echo "JWT_ACCESS_SECRET_KEY=${{ secrets.JWT_ACCESS_SECRET_KEY }}" >> backend/auth/Auth.GRPC/.env
+        echo "JWT_REFRESH_SECRET_KEY=${{ secrets.JWT_REFRESH_SECRET_KEY }}" >> backend/auth/Auth.GRPC/.env
+        echo "SERVICE_PORT=${{ vars.AUTH_SERVICE_PORT }}" >> backend/auth/Auth.GRPC/.env
+        echo "SERVICE_HOST=${{ vars.AUTH_SERVICE_HOST }}" >> backend/auth/Auth.GRPC/.env
+        echo "POSTGRES_PORT=${{ vars.AUTH_POSTGRES_PORT }}" >> backend/auth/Auth.GRPC/.env
+        echo "POSTGRES_HOST=${{ vars.AUTH_POSTGRES_HOST }}" >> backend/auth/Auth.GRPC/.env
+        echo "POSTGRES_DB=${{ secrets.AUTH_POSTGRES_DB }}" >> backend/auth/Auth.GRPC/.env
+        echo "POSTGRES_USER=${{ secrets.AUTH_POSTGRES_USER }}" >> backend/auth/Auth.GRPC/.env
+        echo "POSTGRES_PASSWORD=${{ secrets.AUTH_POSTGRES_PASSWORD }}" >> backend/auth/Auth.GRPC/.env
+        echo "REDIS_PORT=${{ vars.AUTH_REDIS_PORT }}" >> backend/auth/Auth.GRPC/.env
+        echo "REDIS_HOST=${{ vars.AUTH_REDIS_HOST }}" >> backend/auth/Auth.GRPC/.env
+        echo "REDIS_PASSWORD=${{ secrets.AUTH_REDIS_PASSWORD }}" >> backend/auth/Auth.GRPC/.env
+      working-directory: backend/auth
 
     - name: Create .env file for gateway
       run: |
-        echo "PORT=${{ vars.GATEWAY_PORT }}" >> ../../backend/gateway/.env
-        echo "AUTH_SERVICE_PORT=${{ vars.GATEWAY_AUTH_SERVICE_PORT }}" >> ../../backend/gateway/.env
-        echo "REDIS_PORT=${{ vars.GATEWAY_REDIS_PORT}}" >> ../../backend/gateway/.env
-        echo "REDIS_HOST=${{ vars.GATEWAY_REDIS_HOST }}" >> ../../backend/gateway/.env
-        echo "REDIS_PASSWORD=${{ secrets.GATEWAY_REDIS_PASSWORD }}" >> ../../backend/gateway/.env
+        mkdir -p backend/gateway
+        echo "PORT=${{ vars.GATEWAY_PORT }}" >> backend/gateway/.env
+        echo "AUTH_SERVICE_PORT=${{ vars.GATEWAY_AUTH_SERVICE_PORT }}" >> backend/gateway/.env
+        echo "REDIS_PORT=${{ vars.GATEWAY_REDIS_PORT}}" >> backend/gateway/.env
+        echo "REDIS_HOST=${{ vars.GATEWAY_REDIS_HOST }}" >> backend/gateway/.env
+        echo "REDIS_PASSWORD=${{ secrets.GATEWAY_REDIS_PASSWORD }}" >> backend/gateway/.env
+      working-directory: backend/gateway
 
     - name: Docker Compose Up
       run: docker-compose up -d --build
-      working-directory: ../../backend
+      working-directory: backend
 
     - name: Check Docker Container Status
       run: docker ps
-      working-directory: ../../backend
+      working-directory: backend
