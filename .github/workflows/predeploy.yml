@@ -37,6 +37,7 @@ jobs:
     - name: Create .env file for gateway
       run: |
         echo "PORT=${{ vars.GATEWAY_PORT }}" >> ./.env
+        echo "AUTH_SERVICE_HOST=${{ vars.AUTH_SERVICE_HOST }}" >> ./.env
         echo "AUTH_SERVICE_PORT=${{ vars.GATEWAY_AUTH_SERVICE_PORT }}" >> ./.env
         echo "REDIS_PORT=${{ vars.GATEWAY_REDIS_PORT}}" >> ./.env
         echo "REDIS_HOST=${{ vars.GATEWAY_REDIS_HOST }}" >> ./.env
