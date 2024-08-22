@@ -2,10 +2,13 @@ name: Pre-Deploy
 
 on:
   pull_request:
-    branches: 
+    branches:
+      - main
       - dev
+  workflow_run:
+    workflows: ["Auth", "Gateway"]
     types:
-      - closed
+      - completed
 
 jobs:
   pre-deploy:
