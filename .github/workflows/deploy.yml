@@ -42,7 +42,7 @@ jobs:
             echo 'REDIS_HOST=${{ vars.AUTH_REDIS_HOST }}' >> backend/auth/Auth.GRPC/.env
             echo 'REDIS_PASSWORD=${{ secrets.AUTH_REDIS_PASSWORD }}' >> backend/auth/Auth.GRPC/.env
             echo 'PORT=${{ vars.GATEWAY_PORT }}' > backend/gateway/.env
-            echo "AUTH_SERVICE_HOST=${{ vars.AUTH_SERVICE_HOST }}" >> ./.env
+            echo "AUTH_SERVICE_HOST=${{ vars.AUTH_SERVICE_HOST }}" >> backend/gateway/.env
             echo 'AUTH_SERVICE_PORT=${{ vars.GATEWAY_AUTH_SERVICE_PORT }}' >> backend/gateway/.env
             echo 'REDIS_PORT=${{ vars.GATEWAY_REDIS_PORT }}' >> backend/gateway/.env
             echo 'REDIS_HOST=${{ vars.GATEWAY_REDIS_HOST }}' >> backend/gateway/.env
