@@ -1,0 +1,20 @@
+meta {
+  name: profile
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{http-s}}://{{host}}/user/profile
+  body: none
+  auth: bearer
+}
+
+headers {
+  Accept: application/json
+  Content-type: application/json
+}
+
+auth:bearer {
+  token: {{access_token}}
+}

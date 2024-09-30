@@ -1,0 +1,17 @@
+meta {
+  name: register-bad_body
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{http-s}}://{{host}}/user/register
+  body: text
+  auth: none
+}
+
+assert {
+  res.status: eq 400
+  res.body: isString 
+  res.body: matches Invalid request
+}

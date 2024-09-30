@@ -1,0 +1,52 @@
+name: Deploy
+
+on:
+  pull_request:
+    branches: 
+      - dev
+    types:
+      - closed
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Connect Tailscal
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Do the deploy thing
+        run: |
+          ssh -o "StrictHostKeyChecking no" github@server "
+            cd /srv/work-map
+            rm -f backend/auth/Auth.GRPC/.env
+            rm -f backend/gateway/.env
+            echo 'JWT_ACCESS_SECRET_KEY=${{ secrets.JWT_ACCESS_SECRET_KEY }}' > backend/auth/Auth.GRPC/.env
+            echo 'JWT_REFRESH_SECRET_KEY=${{ secrets.JWT_REFRESH_SECRET_KEY }}' >> backend/auth/Auth.GRPC/.env
+            echo 'SERVICE_PORT=${{ vars.AUTH_SERVICE_PORT }}' >> backend/auth/Auth.GRPC/.env
+            echo 'SERVICE_HOST=${{ vars.AUTH_SERVICE_HOST }}' >> backend/auth/Auth.GRPC/.env
+            echo 'POSTGRES_PORT=${{ vars.AUTH_POSTGRES_PORT }}' >> backend/auth/Auth.GRPC/.env
+            echo 'POSTGRES_HOST=${{ vars.AUTH_POSTGRES_HOST }}' >> backend/auth/Auth.GRPC/.env
+            echo 'POSTGRES_DB=${{ secrets.AUTH_POSTGRES_DB }}' >> backend/auth/Auth.GRPC/.env
+            echo 'POSTGRES_USER=${{ secrets.AUTH_POSTGRES_USER }}' >> backend/auth/Auth.GRPC/.env
+            echo 'POSTGRES_PASSWORD=${{ secrets.AUTH_POSTGRES_PASSWORD }}' >> backend/auth/Auth.GRPC/.env
+            echo 'REDIS_PORT=${{ vars.AUTH_REDIS_PORT }}' >> backend/auth/Auth.GRPC/.env
+            echo 'REDIS_HOST=${{ vars.AUTH_REDIS_HOST }}' >> backend/auth/Auth.GRPC/.env
+            echo 'REDIS_PASSWORD=${{ secrets.AUTH_REDIS_PASSWORD }}' >> backend/auth/Auth.GRPC/.env
+            echo 'PORT=${{ vars.GATEWAY_PORT }}' > backend/gateway/.env
+            echo "AUTH_SERVICE_HOST=${{ vars.AUTH_SERVICE_HOST }}" >> backend/gateway/.env
+            echo 'AUTH_SERVICE_PORT=${{ vars.GATEWAY_AUTH_SERVICE_PORT }}' >> backend/gateway/.env
+            echo 'REDIS_PORT=${{ vars.GATEWAY_REDIS_PORT }}' >> backend/gateway/.env
+            echo 'REDIS_HOST=${{ vars.GATEWAY_REDIS_HOST }}' >> backend/gateway/.env
+            echo 'REDIS_PASSWORD=${{ secrets.GATEWAY_REDIS_PASSWORD }}' >> backend/gateway/.env
+            git pull
+            docker compose up -d --build
+          "

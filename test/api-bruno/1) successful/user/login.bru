@@ -1,0 +1,43 @@
+meta {
+  name: login
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{http-s}}://{{host}}/user/login
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "user{{randomNumber}}@email.com",
+    "password": "Qwerty_123"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body: eq ""
+}
+
+script:post-response {
+  if (res.status == 200) {
+    const access_token = res.getHeader("authorization").replace("Bearer ", "");
+    bru.setEnvVar("access_token", access_token);
+  
+    const bearer = res.getHeader("authorization");
+    bru.setEnvVar("bearer", bearer);
+  
+    const cookies = res.getHeader('set-cookie');
+    if(cookies) {
+      bru.setVar("cookie", cookies.join('; '));
+    }
+  }
+}
